@@ -1,0 +1,245 @@
+components:
+  schemas:
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        isCustom:
+          type: boolean
+        planStatisticsId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanFeature'
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanPrice'
+        information:
+          $ref: '#/components/schemas/PlanInformation'
+          nullable: true
+
+    PlanFeature:
+      type: object
+      properties:
+        id:
+          type: string
+        planId:
+          type: string
+        featureId:
+          type: string
+        value:
+          type: string
+        expirationPolicy:
+          type: string
+          nullable: true
+        feature:
+          $ref: '#/components/schemas/Feature'
+
+    Feature:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        key:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PlanPrice:
+      type: object
+      properties:
+        id:
+          type: string
+        planId:
+          type: string
+        credits:
+          type: integer
+          nullable: true
+        amount:
+          type: number
+          format: decimal
+        billingCycle:
+          type: string
+          enum: [MONTHLY, ANNUAL, ONE_TIME]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PlanInformation:
+      type: object
+      properties:
+        id:
+          type: string
+        planId:
+          type: string
+        displayName:
+          type: string
+        shortDescription:
+          type: string
+        priceDescription:
+          type: string
+        monthlyPrice:
+          type: number
+          nullable: true
+        annualPrice:
+          type: number
+          nullable: true
+        creditIncluded:
+          type: integer
+          nullable: true
+        highlight:
+          type: boolean
+          nullable: true
+        mostPopular:
+          type: boolean
+          nullable: true
+        buttonText:
+          type: string
+          nullable: true
+        order:
+          type: integer
+          nullable: true
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanFeatureDisplay'
+
+    PlanFeatureDisplay:
+      type: object
+      properties:
+        id:
+          type: string
+        featureText:
+          type: string
+        isAvailable:
+          type: boolean
+        isHighlight:
+          type: boolean
+          nullable: true
+        tooltip:
+          type: string
+          nullable: true
+        order:
+          type: integer
+
+    PlanResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+              description:
+                type: string
+        prices:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanPrice'
+
+    PricingPageResponseDto:
+      type: object
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricingPlanDto'
+        comparisons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComparisonTableDto'
+
+    PricingPlanDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: string
+        description:
+          type: string
+        isPopular:
+          type: boolean
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              available:
+                type: boolean
+              tooltip:
+                type: string
+                nullable: true
+
+    ComparisonTableDto:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        featuredPlanId:
+          type: string
+          nullable: true
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              plans:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    planId:
+                      type: string
+                    available:
+                      type: boolean
+                    highlight:
+                      type: boolean

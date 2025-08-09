@@ -1,0 +1,127 @@
+paths:
+  /security/2fa/generate:
+    post:
+      summary: Generate 2FA
+      description: Generate a new 2FA secret and QR code for the authenticated user
+      tags:
+        - Security
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 2FA generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  secret:
+                    type: string
+                    description: 2FA secret key
+                  qrCode:
+                    type: string
+                    description: QR code URL for 2FA setup
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /security/2fa/verify:
+    post:
+      summary: Verify 2FA
+      description: Verify 2FA setup with a token
+      tags:
+        - Security
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: 2FA verification token
+      responses:
+        '200':
+          description: 2FA verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: '2FA verified successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /security/2fa/disable:
+    post:
+      summary: Disable 2FA
+      description: Disable 2FA for the authenticated user
+      tags:
+        - Security
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 2FA disabled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: '2FA disabled successfully'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /security/2fa/verify-code:
+    post:
+      summary: Verify 2FA code
+      description: Verify a 2FA code for authentication
+      tags:
+        - Security
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: 2FA verification code
+      responses:
+        '200':
+          description: 2FA code verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: '2FA code verified successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'

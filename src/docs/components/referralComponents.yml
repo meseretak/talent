@@ -1,0 +1,422 @@
+components:
+  schemas:
+    # Referral Core Schemas
+    Referral:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the referral
+        referrerId:
+          type: integer
+          description: ID of the user who made the referral
+        referredEmail:
+          type: string
+          format: email
+          description: Email of the referred person
+        status:
+          type: string
+          enum: [pending, accepted, completed, expired]
+          description: Status of the referral
+        referralCode:
+          type: string
+          description: Unique referral code
+        referralLink:
+          type: string
+          format: uri
+          description: Generated referral link
+        createdAt:
+          type: string
+          format: date-time
+          description: When the referral was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the referral was last updated
+        completedAt:
+          type: string
+          format: date-time
+          description: When the referral was completed
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the referral expires
+
+    # Referral Statistics Schema
+    ReferralStats:
+      type: object
+      properties:
+        totalReferrals:
+          type: integer
+          description: Total number of referrals made by the user
+        successfulReferrals:
+          type: integer
+          description: Number of successful referrals
+        pendingReferrals:
+          type: integer
+          description: Number of pending referrals
+        expiredReferrals:
+          type: integer
+          description: Number of expired referrals
+        totalRewards:
+          type: number
+          description: Total rewards earned from referrals
+        conversionRate:
+          type: number
+          format: float
+          description: Conversion rate percentage
+        averageReward:
+          type: number
+          description: Average reward per successful referral
+
+    # Referral Link Schema
+    ReferralLink:
+      type: object
+      properties:
+        referralLink:
+          type: string
+          format: uri
+          description: Generated referral link
+        referralCode:
+          type: string
+          description: Referral code
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the link expires
+        isActive:
+          type: boolean
+          description: Whether the link is active
+
+    # Referral Click Schema
+    ReferralClick:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the click
+        referralId:
+          type: integer
+          description: ID of the referral
+        referralCode:
+          type: string
+          description: Referral code that was clicked
+        clickedAt:
+          type: string
+          format: date-time
+          description: When the click occurred
+        ipAddress:
+          type: string
+          description: IP address of the clicker
+        userAgent:
+          type: string
+          description: User agent of the clicker
+        location:
+          type: string
+          description: Location of the clicker
+        converted:
+          type: boolean
+          description: Whether the click resulted in a conversion
+
+    # Referral Analytics Schema
+    ReferralAnalytics:
+      type: object
+      properties:
+        referralId:
+          type: integer
+          description: ID of the referral
+        totalClicks:
+          type: integer
+          description: Total number of clicks
+        uniqueClicks:
+          type: integer
+          description: Number of unique clicks
+        conversions:
+          type: integer
+          description: Number of conversions
+        conversionRate:
+          type: number
+          format: float
+          description: Conversion rate percentage
+        averageTimeToConversion:
+          type: number
+          description: Average time to conversion in hours
+        topLocations:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: string
+              clicks:
+                type: integer
+        deviceBreakdown:
+          type: object
+          properties:
+            desktop:
+              type: integer
+            mobile:
+              type: integer
+            tablet:
+              type: integer
+
+    # Referral Settings Schema
+    ReferralSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether referral system is enabled
+        rewardAmount:
+          type: number
+          description: Reward amount for successful referrals
+        rewardType:
+          type: string
+          enum: [credits, discount, cash]
+          description: Type of reward
+        expirationDays:
+          type: integer
+          description: Number of days before referral expires
+        maxReferralsPerUser:
+          type: integer
+          description: Maximum referrals per user
+        minPurchaseAmount:
+          type: number
+          description: Minimum purchase amount for referral to be valid
+        termsAndConditions:
+          type: string
+          description: Terms and conditions for referrals
+
+    # Referral Performance Schema
+    ReferralPerformance:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: User ID
+        totalReferrals:
+          type: integer
+          description: Total referrals made
+        successfulReferrals:
+          type: integer
+          description: Successful referrals
+        totalRewards:
+          type: number
+          description: Total rewards earned
+        averageReward:
+          type: number
+          description: Average reward per referral
+        conversionRate:
+          type: number
+          format: float
+          description: Conversion rate
+        rank:
+          type: integer
+          description: User's rank in referral program
+        tier:
+          type: string
+          enum: [bronze, silver, gold, platinum]
+          description: User's tier in referral program
+
+    # Referral Fraud Score Schema
+    ReferralFraudScore:
+      type: object
+      properties:
+        referralId:
+          type: integer
+          description: ID of the referral
+        fraudScore:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Fraud score (0-100, higher means more suspicious)
+        riskLevel:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Risk level based on fraud score
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              factor:
+                type: string
+                description: Fraud factor
+              score:
+                type: number
+                description: Score for this factor
+        flagged:
+          type: boolean
+          description: Whether the referral is flagged for review
+
+    # Request Schemas
+    CreateReferralRequest:
+      type: object
+      required:
+        - referrerId
+        - referredEmail
+      properties:
+        referrerId:
+          type: integer
+          description: ID of the referrer
+        referredEmail:
+          type: string
+          format: email
+          description: Email of the referred person
+        notes:
+          type: string
+          description: Optional notes about the referral
+
+    TrackReferralClickRequest:
+      type: object
+      properties:
+        ipAddress:
+          type: string
+          description: IP address of the clicker
+        userAgent:
+          type: string
+          description: User agent of the clicker
+        location:
+          type: string
+          description: Location of the clicker
+
+    CompleteReferralRequest:
+      type: object
+      required:
+        - referredEmail
+      properties:
+        referredEmail:
+          type: string
+          format: email
+          description: Email of the referred person
+        purchaseAmount:
+          type: number
+          description: Amount of the purchase made by referred person
+
+    UpdateReferralSettingsRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether referral system is enabled
+        rewardAmount:
+          type: number
+          description: Reward amount for successful referrals
+        rewardType:
+          type: string
+          enum: [credits, discount, cash]
+          description: Type of reward
+        expirationDays:
+          type: integer
+          description: Number of days before referral expires
+        maxReferralsPerUser:
+          type: integer
+          description: Maximum referrals per user
+        minPurchaseAmount:
+          type: number
+          description: Minimum purchase amount for referral to be valid
+        termsAndConditions:
+          type: string
+          description: Terms and conditions for referrals
+
+    ProcessReferralRewardRequest:
+      type: object
+      required:
+        - rewardAmount
+      properties:
+        rewardAmount:
+          type: number
+          description: Amount of reward to process
+        rewardType:
+          type: string
+          enum: [credits, discount, cash]
+          description: Type of reward to process
+
+    # Response Schemas
+    ReferralResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Referral created successfully'
+        data:
+          $ref: '#/components/schemas/Referral'
+
+    ReferralStatsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ReferralStats'
+
+    ReferralLinkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ReferralLink'
+
+    ReferralAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ReferralAnalytics'
+
+    ReferralSettingsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ReferralSettings'
+
+    ReferralPerformanceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ReferralPerformance'
+
+    ReferralFraudScoreResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ReferralFraudScore'
+
+    ReferralClicksResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralClick'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+            hasMore:
+              type: boolean

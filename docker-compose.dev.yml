@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+  node-app:
+    command: >
+      sh -c "
+        npx prisma generate --schema=./prisma/schema &&
+        npx prisma migrate reset --force --schema=./prisma/schema &&
+        npx prisma db push --schema=./prisma/schema --accept-data-loss &&
+        npx prisma db seed --schema=./prisma/schema &&
+        yarn start
+      "
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:secret@postgres_db:5432/postgres?schema=public
+      - PORT=4000
+      - LOKI_HOST=http://loki:3100
+
+  postgres_db:
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
+      interval: 5s
+      timeout: 2s
+      retries: 20

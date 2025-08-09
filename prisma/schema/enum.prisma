@@ -1,0 +1,360 @@
+//* enum information
+enum ProjectStatusType {
+  PLANNING
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+  PAUSED
+  COMPLETED_WITH_ISSUES
+  ARCHIVED
+  PENDING
+  FAILED
+}
+
+enum ProjectRequestStatusType {
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  PROJECT_MANAGER
+  FREELANCER
+  CLIENT
+  SUPPORT
+  INVESTOR
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+  RESET_PASSWORD
+  VERIFY_EMAIL
+  OTP
+}
+
+enum PaymentMethodType {
+  CREDIT_CARD
+  BANK_TRANSFER
+  PAYPAL
+}
+
+enum PaymentFrequencyType {
+  MONTHLY
+  WEEKLY
+  DAILY
+}
+
+enum BankAccountType {
+  CHECKING
+  SAVINGS
+}
+
+enum TerminationType {
+  FREELANCER
+  CLIENT
+  SUPPORT
+  INVESTOR
+  PROJ
+}
+
+enum SkillType {
+  VIDEO
+  PROGRAMMING
+  DESIGN
+  WRITING
+  MARKETING
+}
+
+enum VideoType {
+  VSL
+  UGC
+  DRA
+  AIV
+}
+
+enum ProgrammingType {
+  FRONTEND
+  BACKEND
+  MOBILE
+  FULLSTACK
+}
+
+enum DesignType {
+  UI_UX
+  GRAPHIC
+  MOTION
+}
+
+enum WritingType {
+  TECHNICAL
+  CREATIVE
+  CONTENT
+}
+
+enum MarketingType {
+  SOCIAL
+  EMAIL
+  SEO
+}
+
+enum FreelancerStatus {
+  PENDING // Waiting for approval
+  APPROVED // Accepted and active freelancer
+  REJECTED // Application rejected
+  SUSPENDED // Temporarily suspended
+  TERMINATED // Permanently terminated
+}
+
+enum ClientFreelancerStatus {
+  ACTIVE // Currently hired or actively working with
+  PAST // Previously hired
+  SAVED // Saved for potential future hiring
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum PaymentStatusType {
+  DRAFT // Initial state when invoice is created
+  PENDING // Payment is being processed
+  SENT // Invoice has been sent to client
+  PAID // Payment received successfully
+  OVERDUE // Payment past due date
+  REJECTED // Payment was rejected/failed
+  REFUNDED // Payment was refunded to client
+  CANCELLED // Payment was cancelled
+  PARTIALLY_PAID // Partial payment received
+  DISPUTED // Payment is under dispute
+}
+
+// Add this enum for billing events
+enum BillingEventType {
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_RENEWED
+  SUBSCRIPTION_CANCELED
+  SUBSCRIPTION_UPGRADED
+  SUBSCRIPTION_DOWNGRADED
+  PAYMENT_SUCCEEDED
+  PAYMENT_FAILED
+  REFUND_ISSUED
+  CREDIT_APPLIED
+  INVOICE_CREATED
+  INVOICE_PAID
+  INVOICE_OVERDUE
+  MANUAL_ADJUSTMENT
+}
+
+enum ResourceStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ResourceType {
+  VIDEO
+  DESIGN
+  AUDIO
+  DOCUMENT
+  CODE
+  OTHER
+}
+
+enum AudioType {
+  MUSIC
+  VOICEOVER
+  SOUND_EFFECTS
+  PODCAST
+}
+
+enum DeliverableStatus {
+  DRAFT
+  IN_PROGRESS
+  REVIEW
+  APPROVED
+  REJECTED
+  DELIVERED
+}
+
+enum FeedbackStatus {
+  PENDING
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  SUBMITTED_FOR_REVIEW
+  CHANGES_REQUESTED
+  REVISION_IN_PROGRESS
+  APPROVED
+  FINAL_REVIEW
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum TaskPriorityType {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectActivityType {
+  JOINED
+  MOVED
+  COMMENTED
+  UPDATED
+  CREATED
+  DELETED
+}
+
+enum JobTimerStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum AuditActionType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  VIEW
+  COMMENT
+  UPLOAD
+  DOWNLOAD
+  PAYMENT
+  REVIEW
+  REPORT
+  REJECT
+  APPROVE
+  SUSPEND
+  TERMINATE
+  REQUEST
+  RESPONSE
+  REQUEST_UPDATE
+  RESPONSE_UPDATE
+}
+
+
+enum MediaSource {
+  UPLOAD
+  URL
+  NO_MEDIA
+}
+enum MeetingStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  SYSTEM
+  PROJECT
+  TASK
+  PAYMENT
+  CHAT
+  SECURITY
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+// * model Library Information
+enum LibResourceStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LibDifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LibAttachmentType {
+  PDF
+  VIDEO
+  LINK
+  IMAGE
+  OTHER
+}
+
+enum LibReactionType {
+  LIKE
+  DISLIKE
+}
+
+// * Pricing Module And Subscription Management
+
+enum TransactionType {
+  SUBSCRIPTION
+  REFERRAL
+  USAGE
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUALLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PAUSED
+  TRIALING
+  PENDING
+}
+
+enum CreditType {
+  BASE
+  REFERRAL
+}
+
+enum ReferralCreditStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  CREDIT_BONUS
+}
+
+enum DiscountTarget {
+  PLANS
+  SERVICES
+  ALL
+  BUNDLES
+}

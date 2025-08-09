@@ -1,0 +1,2421 @@
+// * Model Admin Information Module
+
+model Admin {
+  id Int @id @default(autoincrement())
+}
+
+// * Model Communication Module
+model ChatMessage {
+  id            Int        @id @default(autoincrement())
+  message       String
+  messageType   String // "text", "image", "file", "voice", "video"
+  sender        User       @relation("UserToMessageSent", fields: [senderId], references: [id])
+  senderId      Int
+  recipient     User?      @relation("UserToMessageReceived", fields: [recipientId], references: [id])
+  recipientId   Int?
+  chatRoom      ChatRoom   @relation(fields: [roomId], references: [id])
+  roomId        Int
+  sentAt        DateTime   @default(now())
+  editedAt      DateTime?
+  readAt        DateTime?
+  status        String // "sent", "delivered", "read"
+  reactions     Json? // Array of {userId: number, emoji: string}
+  attachments   Document[] @relation("MessageAttachments")
+  attachmentId  Int?
+  mediaContent  Json? // Stores file metadata
+  replyTo       Json? // Stores reply metadata
+  forwardedFrom Json? // Stores forwarding metadata
+  mentions      Int[] // Array of mentioned user IDs
+  metadata      Json? // Stores message metadata
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([roomId])
+}
+
+model ChatRoom {
+  id                Int           @id @default(autoincrement())
+  name              String
+  description       String?
+  participants      User[]        @relation("UserToChatRoomParticipant")
+  messages          ChatMessage[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime?     @updatedAt
+  lastMessageAt     DateTime?
+  isGroupChat       Boolean       @default(false)
+  groupChatId       Int?
+  chatType          String // "with_freelancer", "with_client", "with_project_manager"
+  admin             User?         @relation("UserToChatRoomAdmin", fields: [adminId], references: [id])
+  adminId           Int?
+  moderators        User[]        @relation("UserToChatRoomManager")
+  mutedParticipants Int[] // Array of muted user IDs
+  isTyping          Json? // Array of {userId: number, isTyping: boolean}
+  pinnedMessages    Int[] // Array of pinned message IDs
+  settings          Json // Room settings
+  metadata          Json? // Room metadata
+  Project           Project?      @relation(fields: [projectId], references: [id])
+  projectId         Int?
+
+  @@index([adminId])
+  @@index([projectId])
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  type        NotificationType
+  content     String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  readAt      DateTime?
+  recipient   User             @relation("UserToNotificationReceived", fields: [recipientId], references: [id])
+  recipientId Int
+  sender      User?            @relation("UserToNotificationSent", fields: [senderId], references: [id])
+  senderId    Int?
+  user        User             @relation("UserToNotification", fields: [userId], references: [id])
+  userId      Int
+  entityType  String // "project", "task", "payment", etc.
+  entityId    Int // ID of the related entity
+
+  @@index([recipientId])
+  @@index([senderId])
+  @@index([userId])
+}
+
+model NotificationTemplate {
+  id           String           @id @default(uuid())
+  name         String           @unique
+  type         NotificationType
+  subject      String
+  bodyTemplate String           @db.Text
+  variables    String[] // List of variables that can be used in the template
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+// * Model Client Information
+
+model Client {
+  id                      Int                     @id @default(autoincrement())
+  user                    User                    @relation(fields: [userId], references: [id])
+  userId                  Int                     @unique
+  projects                Project[]               @relation("ClientToProject")
+  companyName             String?
+  companyWebsite          String?
+  billingAddress          Address?                @relation("ClientBillingAddress", fields: [billingAddressId], references: [id])
+  billingAddressId        Int?
+  contactPerson           ContactPerson?          @relation(fields: [contactPersonId], references: [id])
+  contactPersonId         Int?
+  subscription            Subscription?
+  referralCode            String                  @unique
+  contracts               Contract[]
+  reviews                 Review[]
+  clientType              ClientType
+  statisticsInformation   StatisticsInformation   @relation(fields: [statisticsInformationId], references: [id])
+  statisticsInformationId Int
+  resources               Resource[]
+  projectRequests         ProjectRequest[]
+  referredBy              Referral[]              @relation("ReferredClients")
+  referrals               Referral[]              @relation("ReferringClient")
+  creditTransactions      CreditTransaction[]
+  customPlanRequests      CustomPlanRequest[]
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  DiscountRedemption      DiscountRedemption[]
+  billingAddresses        BillingAddress[]
+  paymentTransactions     PaymentTransaction[]
+  billingHistory          BillingHistory[]
+  defaultPaymentMethod    String?
+  taxExempt               Boolean                 @default(false)
+  taxId                   String?
+  CreditUsageAnalytics    CreditUsageAnalytics[]
+  hiredFreelancers        ClientHiredFreelancer[] // Added relation field
+  stripeCustomerId        String?                 @unique // Added for Stripe integration
+  videoTaskRequests       VideoTaskRequest[]
+
+  @@index([billingAddressId])
+  @@index([contactPersonId])
+  @@index([statisticsInformationId])
+}
+
+model ContactPerson {
+  id          Int      @id @default(autoincrement())
+  fullName    String
+  email       String
+  phoneNumber String?
+  position    String?
+  Client      Client[]
+}
+
+model Contract {
+  id                 Int      @id @default(autoincrement())
+  client             Client   @relation(fields: [clientId], references: [id])
+  clientId           Int
+  project            Project  @relation(fields: [projectId], references: [id])
+  projectId          Int
+  startDate          DateTime
+  endDate            DateTime
+  termsAndConditions String
+  signedAt           DateTime
+  signedBy           User     @relation("ContractSignedBy", fields: [signedById], references: [id])
+  signedById         Int
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([signedById])
+}
+
+model File {
+  id              Int       @id @default(autoincrement())
+  uuid            String    @unique @default(uuid())
+  fileName        String
+  description     String?
+  fileURL         String
+  fileSize        Int?
+  fileType        String?
+  storageProvider String? // e.g., 'local', 's3', 'azure', etc.
+  bucket          String? // For cloud storage buckets
+  objectType      String? // e.g., 'User', 'Project', 'Task', etc.
+  objectId        Int? // ID of the associated object
+  metadata        Json? // For any extra info (thumbnails, tags, etc.)
+  uploadedBy      User      @relation("UserUploadedFile", fields: [uploadedById], references: [id])
+  uploadedById    Int
+  uploadedAt      DateTime  @default(now())
+  deletedAt       DateTime? // For soft deletes
+
+  @@index([uploadedById])
+  @@index([objectType, objectId])
+}
+
+//* enum information
+enum ProjectStatusType {
+  PLANNING
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+  PAUSED
+  COMPLETED_WITH_ISSUES
+  ARCHIVED
+  PENDING
+  FAILED
+}
+
+enum ProjectRequestStatusType {
+  IN_PROGRESS
+  APPROVED
+  REJECTED
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  PROJECT_MANAGER
+  FREELANCER
+  CLIENT
+  SUPPORT
+  INVESTOR
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+  RESET_PASSWORD
+  VERIFY_EMAIL
+  OTP
+}
+
+enum PaymentMethodType {
+  CREDIT_CARD
+  BANK_TRANSFER
+  PAYPAL
+}
+
+enum PaymentFrequencyType {
+  MONTHLY
+  WEEKLY
+  DAILY
+}
+
+enum BankAccountType {
+  CHECKING
+  SAVINGS
+}
+
+enum TerminationType {
+  FREELANCER
+  CLIENT
+  SUPPORT
+  INVESTOR
+  PROJ
+}
+
+enum SkillType {
+  VIDEO
+  PROGRAMMING
+  DESIGN
+  WRITING
+  MARKETING
+}
+
+enum VideoType {
+  VSL
+  UGC
+  DRA
+  AIV
+}
+
+enum ProgrammingType {
+  FRONTEND
+  BACKEND
+  MOBILE
+  FULLSTACK
+}
+
+enum DesignType {
+  UI_UX
+  GRAPHIC
+  MOTION
+}
+
+enum WritingType {
+  TECHNICAL
+  CREATIVE
+  CONTENT
+}
+
+enum MarketingType {
+  SOCIAL
+  EMAIL
+  SEO
+}
+
+enum FreelancerStatus {
+  PENDING // Waiting for approval
+  APPROVED // Accepted and active freelancer
+  REJECTED // Application rejected
+  SUSPENDED // Temporarily suspended
+  TERMINATED // Permanently terminated
+}
+
+enum ClientFreelancerStatus {
+  ACTIVE // Currently hired or actively working with
+  PAST // Previously hired
+  SAVED // Saved for potential future hiring
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum PaymentStatusType {
+  DRAFT // Initial state when invoice is created
+  PENDING // Payment is being processed
+  SENT // Invoice has been sent to client
+  PAID // Payment received successfully
+  OVERDUE // Payment past due date
+  REJECTED // Payment was rejected/failed
+  REFUNDED // Payment was refunded to client
+  CANCELLED // Payment was cancelled
+  PARTIALLY_PAID // Partial payment received
+  DISPUTED // Payment is under dispute
+}
+
+// Add this enum for billing events
+enum BillingEventType {
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_RENEWED
+  SUBSCRIPTION_CANCELED
+  SUBSCRIPTION_UPGRADED
+  SUBSCRIPTION_DOWNGRADED
+  PAYMENT_SUCCEEDED
+  PAYMENT_FAILED
+  REFUND_ISSUED
+  CREDIT_APPLIED
+  INVOICE_CREATED
+  INVOICE_PAID
+  INVOICE_OVERDUE
+  MANUAL_ADJUSTMENT
+}
+
+enum ResourceStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ResourceType {
+  VIDEO
+  DESIGN
+  AUDIO
+  DOCUMENT
+  CODE
+  OTHER
+}
+
+enum AudioType {
+  MUSIC
+  VOICEOVER
+  SOUND_EFFECTS
+  PODCAST
+}
+
+enum DeliverableStatus {
+  DRAFT
+  IN_PROGRESS
+  REVIEW
+  APPROVED
+  REJECTED
+  DELIVERED
+}
+
+enum FeedbackStatus {
+  PENDING
+  ACKNOWLEDGED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  SUBMITTED_FOR_REVIEW
+  CHANGES_REQUESTED
+  REVISION_IN_PROGRESS
+  APPROVED
+  FINAL_REVIEW
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum TaskPriorityType {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectActivityType {
+  JOINED
+  MOVED
+  COMMENTED
+  UPDATED
+  CREATED
+  DELETED
+}
+
+enum JobTimerStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum AuditActionType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  VIEW
+  COMMENT
+  UPLOAD
+  DOWNLOAD
+  PAYMENT
+  REVIEW
+  REPORT
+  REJECT
+  APPROVE
+  SUSPEND
+  TERMINATE
+  REQUEST
+  RESPONSE
+  REQUEST_UPDATE
+  RESPONSE_UPDATE
+}
+
+enum MediaSource {
+  UPLOAD
+  URL
+  NO_MEDIA
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  SYSTEM
+  PROJECT
+  TASK
+  PAYMENT
+  CHAT
+  SECURITY
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+// * model Library Information
+enum LibResourceStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LibDifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LibAttachmentType {
+  PDF
+  VIDEO
+  LINK
+  IMAGE
+  OTHER
+}
+
+enum LibReactionType {
+  LIKE
+  DISLIKE
+}
+
+// * Pricing Module And Subscription Management
+
+enum TransactionType {
+  SUBSCRIPTION
+  REFERRAL
+  USAGE
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUALLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PAUSED
+  TRIALING
+  PENDING
+}
+
+enum CreditType {
+  BASE
+  REFERRAL
+}
+
+enum ReferralCreditStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  CREDIT_BONUS
+}
+
+enum DiscountTarget {
+  PLANS
+  SERVICES
+  ALL
+  BUNDLES
+}
+
+// Financial Payment Models
+model PaymentTransaction {
+  id               String            @id @default(uuid())
+  amount           Decimal           @db.Decimal(10, 2)
+  currency         String            @default("USD")
+  status           PaymentStatusType
+  paymentMethod    PaymentMethodType
+  type             TransactionType
+  paymentReference String? // External payment reference (e.g., Stripe payment ID)
+  description      String?
+  metadata         Json? // Additional payment metadata
+  client           Client            @relation(fields: [clientId], references: [id])
+  clientId         Int
+  invoice          Invoice?          @relation(fields: [invoiceId], references: [id])
+  invoiceId        Int?
+  subscription     Subscription?     @relation(fields: [subscriptionId], references: [id])
+  subscriptionId   String?
+  billingAddress   BillingAddress?   @relation(fields: [billingAddressId], references: [id])
+  billingAddressId String?
+  refundedAmount   Decimal?          @db.Decimal(10, 2)
+  refundReason     String?
+  refundedAt       DateTime?
+  paymentProcessor String            @default("STRIPE") // STRIPE, PAYPAL, etc.
+  processorFee     Decimal?          @db.Decimal(10, 2)
+  netAmount        Decimal?          @db.Decimal(10, 2)
+  taxAmount        Decimal?          @db.Decimal(10, 2)
+  taxRate          Decimal?          @db.Decimal(5, 2)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  paymentAttempts  PaymentAttempt[]
+  billingHistory   BillingHistory[]
+
+  @@index([clientId])
+  @@index([invoiceId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PaymentAttempt {
+  id                   String             @id @default(uuid())
+  paymentTransaction   PaymentTransaction @relation(fields: [paymentTransactionId], references: [id])
+  paymentTransactionId String
+  status               PaymentStatusType
+  errorCode            String?
+  errorMessage         String?
+  gatewayResponse      Json? // Raw response from payment gateway
+  attemptedAt          DateTime           @default(now())
+
+  @@index([paymentTransactionId])
+  @@index([status])
+}
+
+model BillingAddress {
+  id                  String               @id @default(uuid())
+  addressLine1        String
+  addressLine2        String?
+  city                String
+  state               String?
+  postalCode          String
+  country             String
+  isDefault           Boolean              @default(false)
+  client              Client               @relation(fields: [clientId], references: [id])
+  clientId            Int
+  paymentTransactions PaymentTransaction[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([clientId])
+}
+
+model BillingHistory {
+  id                   String              @id @default(uuid())
+  client               Client              @relation(fields: [clientId], references: [id])
+  clientId             Int
+  subscription         Subscription?       @relation(fields: [subscriptionId], references: [id])
+  subscriptionId       String?
+  invoice              Invoice?            @relation(fields: [invoiceId], references: [id])
+  invoiceId            Int?
+  paymentTransaction   PaymentTransaction? @relation(fields: [paymentTransactionId], references: [id])
+  paymentTransactionId String?
+  eventType            BillingEventType
+  amount               Decimal             @db.Decimal(10, 2)
+  description          String
+  metadata             Json?
+  createdAt            DateTime            @default(now())
+
+  @@index([clientId])
+  @@index([subscriptionId])
+  @@index([invoiceId])
+  @@index([paymentTransactionId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model FinancialSummary {
+  id                      String   @id @default(uuid())
+  period                  String // Format: YYYY-MM
+  totalRevenue            Decimal  @db.Decimal(12, 2)
+  subscriptionRevenue     Decimal  @db.Decimal(12, 2)
+  oneTimeRevenue          Decimal  @db.Decimal(12, 2)
+  refundAmount            Decimal  @db.Decimal(12, 2)
+  processingFees          Decimal  @db.Decimal(12, 2)
+  netRevenue              Decimal  @db.Decimal(12, 2)
+  taxCollected            Decimal  @db.Decimal(12, 2)
+  newSubscriptions        Int
+  canceledSubscriptions   Int
+  renewedSubscriptions    Int
+  upgradedSubscriptions   Int
+  downgradedSubscriptions Int
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@unique([period])
+  @@index([period])
+}
+
+model TaxRate {
+  id         String   @id @default(uuid())
+  country    String
+  state      String?
+  postalCode String?
+  rate       Decimal  @db.Decimal(5, 2)
+  taxType    String // VAT, GST, Sales Tax, etc.
+  isDefault  Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([country, state, postalCode, taxType])
+  @@index([country, state, postalCode])
+}
+
+model Invoice {
+  id                  Int                  @id @default(autoincrement())
+  amount              Int
+  lateFeeAmount       Int? // Calculated from subscription.lateFeePercentage
+  discountAmount      Int? // Calculated from subscription.discountPercentage
+  issuedAt            DateTime
+  dueDate             DateTime?
+  status              PaymentStatusType
+  paymentInformation  PaymentInformation[]
+  subscription        Subscription         @relation(fields: [subscriptionId], references: [id])
+  subscriptionId      String
+  paymentTransactions PaymentTransaction[]
+  billingHistory      BillingHistory[]
+  invoiceItems        InvoiceItem[]
+  invoiceNumber       String               @unique
+  notes               String?
+  taxAmount           Int?
+  totalAmount         Int
+  pdfUrl              String?
+  sentAt              DateTime?
+  viewedAt            DateTime?
+  reminderSentAt      DateTime?
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  invoiceId   Int
+  description String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  amount      Decimal @db.Decimal(10, 2)
+  taxable     Boolean @default(true)
+  metadata    Json?
+
+  @@index([invoiceId])
+}
+
+//* model Freelancer Information
+model Freelancer {
+  id                       Int                     @id @default(autoincrement())
+  user                     User                    @relation("UserToFreelancer", fields: [userId], references: [id])
+  userId                   Int                     @unique
+  headline                 String
+  bio                      String
+  about                    String
+  skills                   Skill[]                 @relation("FreelancerSkills")
+  categories               Category[]              @relation("FreelancerCategories")
+  featuredFreelancer       Boolean                 @default(false)
+  rank                     Boolean                 @default(false)
+  attachments              ProjectDocument[]
+  certifications           Certification[]
+  workHistory              WorkHistory[]
+  availability             Availability            @relation(fields: [availabilityId], references: [id])
+  portfolio                PortfolioItem[]
+  paymentInformation       PaymentInformation[]
+  projects                 Project[]               @relation("FreelancerToProject")
+  statisticsInformation    StatisticsInformation   @relation(fields: [statisticsInformationId], references: [id])
+  terminationInformation   TerminationInformation? @relation(fields: [terminationInformationId], references: [id])
+  reviews                  Review[]
+  status                   FreelancerStatus        @default(PENDING)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  availabilityId           Int
+  statisticsInformationId  Int
+  terminationInformationId Int?
+  tasks                    Task[]                  @relation("TaskToFreelancer")
+  timeLogs                 TimeLog[]               @relation("FreelancerToTimeLog")
+  projectTeams             ProjectTeam[]           @relation("ProjectTeamToFreelancer")
+  profilePhoto             String?
+  bannerPhoto              String?
+  hiredByClients           ClientHiredFreelancer[] // Added relation field
+  blockedProjects          Project[]               @relation("BlockedTalentsOnProject")
+}
+
+model Skill {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  description     String?
+  type            SkillType
+  videoType       VideoType?
+  programmingType ProgrammingType?
+  designType      DesignType?
+  writingType     WritingType?
+  marketingType   MarketingType?
+  freelancers     Freelancer[]     @relation("FreelancerSkills")
+}
+
+model Category {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  description String?
+  freelancers Freelancer[] @relation("FreelancerCategories")
+}
+
+model Certification {
+  id                  Int         @id @default(autoincrement())
+  name                String
+  issuingOrganization String
+  issueDate           DateTime
+  expirationDate      DateTime?
+  credentialId        String?
+  Freelancer          Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId        Int?
+}
+
+model WorkHistory {
+  id           Int         @id @default(autoincrement())
+  companyName  String
+  position     String
+  startDate    DateTime
+  endDate      DateTime?
+  description  String?
+  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+}
+
+model Availability {
+  id                    Int                @id @default(autoincrement())
+  status                AvailabilityStatus
+  availableHoursPerWeek Int?
+  unavailableUntil      DateTime?
+  notes                 String?
+  Freelancer            Freelancer[]
+}
+
+model TerminationInformation {
+  id               Int             @id @default(autoincrement())
+  terminatedAt     DateTime?
+  terminatedReason String?
+  isTerminated     Boolean
+  terminationType  TerminationType
+  terminatedBy     User            @relation("UserToTermination", fields: [userId], references: [id])
+  freelancers      Freelancer[]
+  userId           Int
+  projects         Project[]
+
+  @@index([userId])
+}
+
+model PortfolioItem {
+  id           Int         @id @default(autoincrement())
+  title        String
+  description  String?
+  imageURL     String?
+  projectURL   String?
+  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+}
+
+model PaymentInformation {
+  id                Int                  @id @default(autoincrement())
+  bankAccountNumber String
+  bankAccountName   String
+  bankName          String
+  currency          String
+  bankAccountType   BankAccountType
+  paymentMethod     PaymentMethodType
+  paymentFrequency  PaymentFrequencyType
+  paymentAmount     Int
+  paymentDate       DateTime
+  taxId             String?
+  taxCountry        String?
+  taxState          String?
+  taxAddress        String?
+  taxPercentage     Int?
+  Freelancer        Freelancer?          @relation(fields: [freelancerId], references: [id])
+  freelancerId      Int?
+  taxInformationId  Int?
+  Invoice           Invoice?             @relation(fields: [invoiceId], references: [id])
+  invoiceId         Int?
+}
+
+model StatisticsInformation {
+  id                 Int          @id @default(autoincrement())
+  totalEarnings      Int
+  totalProjects      Int
+  totalTasks         Int
+  totalReviews       Int
+  totalRating        Int
+  totalClients       Int
+  totalJobsCompleted Int
+  totalJobsOngoing   Int
+  totalJobsPending   Int
+  totalJobsCancelled Int
+  totalJobsOnHold    Int
+  totalStorageUsed   Int
+  Freelancer         Freelancer[]
+  Client             Client[]
+}
+
+model ClientHiredFreelancer {
+  client            Client                 @relation(fields: [clientId], references: [id])
+  clientId          Int
+  freelancer        Freelancer             @relation(fields: [freelancerId], references: [id])
+  freelancerId      Int
+  hiredAt           DateTime               @default(now())
+  status            ClientFreelancerStatus @default(ACTIVE)
+  terminatedAt      DateTime?
+  terminationReason String?
+
+  @@id([clientId, freelancerId])
+  @@index([freelancerId])
+}
+
+model Review {
+  id           Int         @id @default(autoincrement())
+  rating       Float       @default(0)
+  reviewText   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  projectId    Int?
+  reviewer     User        @relation("UserToReview", fields: [reviewerId], references: [id])
+  reviewerId   Int
+  comment      String? // Optional client feedback
+  freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+  client       Client      @relation(fields: [clientId], references: [id])
+  clientId     Int
+  project      Project?    @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([reviewerId])
+  @@index([freelancerId])
+  @@index([clientId])
+}
+
+model LibraryResource {
+  id            String             @id @default(cuid())
+  title         String
+  description   String             @db.Text
+  content       String             @db.Text
+  keyPoints     String?            @db.Text
+  status        LibResourceStatus  @default(DRAFT)
+  difficulty    LibDifficultyLevel @default(INTERMEDIATE)
+  duration      Int? // Duration in minutes
+  views         Int                @default(0)
+  allowComments Boolean            @default(true)
+  thumbnailUrl  String?
+  publishedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relations
+  author       User                      @relation("ResourceAuthor", fields: [authorId], references: [id])
+  authorId     Int
+  category     LibraryCategory           @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  sections     LibrarySection[]
+  attachments  LibraryAttachment[]
+  comments     LibraryComment[]
+  progress     LibraryProgress[]
+  favorites    LibraryFavorite[]
+  pins         LibraryPin[]
+  relatedTo    LibraryResourceRelation[] @relation("RelatedFrom")
+  relatedFrom  LibraryResourceRelation[] @relation("RelatedTo")
+  certificates LibraryCertificate[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+}
+
+model LibrarySection {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  order     Int
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@index([resourceId, order])
+}
+
+model LibraryAttachment {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  url         String
+  type        LibAttachmentType
+  size        Int? // Size in bytes
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@index([resourceId, type])
+}
+
+model LibraryResourceRelation {
+  id          String          @id @default(cuid())
+  resource    LibraryResource @relation("RelatedFrom", fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId  String
+  relatedTo   LibraryResource @relation("RelatedTo", fields: [relatedToId], references: [id], onDelete: Cascade)
+  relatedToId String
+  createdAt   DateTime        @default(now())
+
+  @@unique([resourceId, relatedToId])
+  @@index([resourceId])
+  @@index([relatedToId])
+}
+
+model LibraryComment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user       User              @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+  replies    LibraryReply[]
+  reactions  LibraryReaction[]
+
+  @@index([resourceId, createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+model LibraryReply {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User              @relation(fields: [userId], references: [id])
+  userId    Int
+  comment   LibraryComment    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId String
+  reactions LibraryReaction[]
+
+  @@index([commentId, createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+model LibraryReaction {
+  id        String          @id @default(cuid())
+  type      LibReactionType
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  // Relations
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  comment   LibraryComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId String?
+  reply     LibraryReply?   @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  replyId   String?
+
+  @@unique([userId, commentId, type])
+  @@unique([userId, replyId, type])
+}
+
+model LibraryProgress {
+  id           String    @id @default(cuid())
+  percentage   Int       @default(0)
+  completed    Boolean   @default(false)
+  lastAccessed DateTime  @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, completed])
+  @@index([resourceId, completed])
+}
+
+model LibraryFavorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model LibraryPin {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model LibraryCertificate {
+  id       String   @id @default(cuid())
+  title    String
+  imageUrl String?
+  issuedAt DateTime @default(now())
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id])
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, issuedAt(sort: Desc)])
+}
+
+model LibraryCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  color       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  resources LibraryResource[]
+
+  @@index([isActive])
+}
+
+// * Model Project Manager Module
+model ProjectManager {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @unique
+  user            User      @relation("UserToProjectManager", fields: [userId], references: [id])
+  tasks           Task[]    @relation("TaskToProjectManager")
+  managedProjects Project[] @relation("ProjectToProjectManager")
+
+  @@index([userId])
+}
+
+// Removing the ReviewOutcome model completely since its functionality is now in Deliverable
+
+// * Model Resource Information
+model Resource {
+  id                    Int                 @id @default(autoincrement())
+  name                  String
+  description           String?
+  resourceType          ResourceType
+  inspirationLinks      String[]
+  referenceDocuments    Document[]          @relation("ResourceDocuments")
+  mediaSpecifications   MediaSpecifications @relation(fields: [mediaSpecificationsId], references: [id])
+  brandingGuidelines    BrandingGuidelines  @relation(fields: [brandingGuidelinesId], references: [id])
+  referenceLinks        String[]
+  tags                  String[]
+  status                ResourceStatus
+  createdAt             DateTime
+  updatedAt             DateTime?
+  client                Client?             @relation(fields: [clientId], references: [id])
+  clientId              Int?
+  mediaSpecificationsId Int
+  brandingGuidelinesId  Int
+  project               Project?            @relation(fields: [projectId], references: [id])
+  projectId             Int?
+  projectRequests       ProjectRequest[]
+
+  @@index([clientId])
+  @@index([mediaSpecificationsId])
+  @@index([brandingGuidelinesId])
+  @@index([projectId])
+}
+
+model MediaSpecifications {
+  id         Int              @id @default(autoincrement())
+  videoType  VideoType?
+  audioType  AudioType?
+  designType DesignType?
+  codeType   ProgrammingType?
+  Resource   Resource[]
+}
+
+model BrandingGuidelines {
+  id             Int        @id @default(autoincrement())
+  primaryColor   String?
+  secondaryColor String?
+  accentColors   String[]
+  typography     String?
+  logoUrl        String?
+  brandVoice     String?
+  styleGuideUrl  String?
+  Resource       Resource[]
+}
+
+//* Model Project Management Module
+
+model Project {
+  id                 Int                     @id @default(autoincrement())
+  name               String                  @db.VarChar(255)
+  description        String                  @db.Text
+  status             ProjectStatusType       @default(IN_PROGRESS)
+  startDate          DateTime
+  endDate            DateTime
+  budget             Float
+  creator            User                    @relation("UserToProject", fields: [creatorId], references: [id])
+  creatorId          Int
+  projectManager     ProjectManager?         @relation("ProjectToProjectManager", fields: [projectManagerId], references: [id])
+  projectManagerId   Int?
+  client             Client                  @relation("ClientToProject", fields: [clientId], references: [id])
+  clientId           Int
+  freelancers        Freelancer[]            @relation("FreelancerToProject")
+  activities         ProjectActivity[]       @relation("ProjectToActivity")
+  budgetInfo         BudgetInformation?      @relation(fields: [budgetInfoId], references: [id])
+  budgetInfoId       Int?                    @unique
+  kanbanBoard        KanbanBoard?            @relation(fields: [kanbanBoardId], references: [id])
+  kanbanBoardId      Int?                    @unique
+  terminationInfo    TerminationInformation? @relation(fields: [terminationInfoId], references: [id])
+  terminationInfoId  Int?                    @unique
+  meetings           Meeting[]
+  chatRooms          ChatRoom[]
+  reviews            Review[]
+  projectRequests    ProjectRequest[]
+  contracts          Contract[]
+  timeLogs           TimeLog[]
+  projectTeams       ProjectTeam[]
+  milestones         Milestone[]
+  resources          Resource[]
+  favorites          Favorite[]
+  ProjectDocument    ProjectDocument[]
+  folders            DocumentFolder[]
+  Task               Task[]
+  Color              String
+  deliverables       Deliverable[] // Contains the metrics formerly in ReviewOutcome
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  createdFromRequest ProjectRequest?         @relation("RequestToProject", fields: [requestId], references: [id])
+  requestId          Int?                    @unique
+  blockedTalents     Freelancer[]            @relation("BlockedTalentsOnProject")
+  videoTaskRequests  VideoTaskRequest[]
+
+  @@index([creatorId])
+  @@index([projectManagerId])
+  @@index([clientId])
+  @@index([budgetInfoId])
+  @@index([kanbanBoardId])
+  @@index([terminationInfoId])
+}
+
+model Task {
+  id                    Int               @id @default(autoincrement())
+  title                 String            @db.VarChar(255)
+  description           String            @db.Text
+  status                TaskStatus        @default(IN_PROGRESS)
+  priority              TaskPriorityType  @default(MEDIUM)
+  dueDate               DateTime
+  estimatedHours        Float
+  actualHours           Float?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  assignedTo            User?             @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId          Int?
+  assignedBy            User?             @relation("TaskAssignedBy", fields: [assignedById], references: [id])
+  assignedById          Int?
+  assignedAt            DateTime?
+  parentTaskId          Int?
+  subTasks              SubTask[]         @relation("SubTasks")
+  projectActivities     ProjectActivity[] @relation("TaskToActivityMany")
+  freelancer            Freelancer?       @relation("TaskToFreelancer", fields: [freelancerId], references: [id])
+  freelancerId          Int?
+  documents             ProjectDocument[] @relation("TaskToDocument")
+  projectManager        ProjectManager?   @relation("TaskToProjectManager", fields: [projectManagerId], references: [id])
+  projectManagerId      Int?
+  timeLogs              TimeLog[]
+  jobTimers             JobTimer[]
+  comments              Comment[]
+  milestone             Milestone?        @relation(fields: [milestoneId], references: [id])
+  milestoneId           Int?
+  attachments           Attachment[]      @relation("TaskToAttachment")
+  kanbanColumn          KanbanColumn?     @relation(fields: [kanbanColumnId], references: [id])
+  kanbanColumnId        Int?
+  favorites             Favorite[]
+  projectId             Int?
+  Project               Project?          @relation(fields: [projectId], references: [id])
+  activity              ProjectActivity?  @relation("TaskToActivity")
+  activityId            Int?              @unique
+  deliverable           Deliverable?      @relation()
+  relatedToDeliverables Deliverable[]     @relation("RelatedTasksToDeliverables")
+  videoTaskRequest      VideoTaskRequest? @relation("TaskFromVideoRequest")
+
+  @@index([assignedToId])
+  @@index([assignedById])
+  @@index([parentTaskId])
+  @@index([freelancerId])
+  @@index([projectManagerId])
+  @@index([milestoneId])
+  @@index([kanbanColumnId])
+}
+
+model SubTask {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(255)
+  completed    Boolean  @default(false)
+  parentTask   Task?    @relation("SubTasks", fields: [parentTaskId], references: [id])
+  parentTaskId Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([parentTaskId])
+}
+
+model ProjectActivity {
+  id           Int                 @id @default(autoincrement())
+  type         ProjectActivityType
+  description  String
+  createdAt    DateTime            @default(now())
+  user         User                @relation("UserToActivity", fields: [userId], references: [id])
+  userId       Int
+  project      Project             @relation("ProjectToActivity", fields: [projectId], references: [id])
+  projectId    Int
+  task         Task?               @relation("TaskToActivity", fields: [taskId], references: [id])
+  taskId       Int?                @unique
+  relatedTasks Task[]              @relation("TaskToActivityMany")
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([taskId])
+}
+
+model TimeLog {
+  id           Int        @id @default(autoincrement())
+  startTime    DateTime
+  endTime      DateTime?
+  taskId       Int
+  task         Task       @relation(fields: [taskId], references: [id])
+  userId       Int
+  user         User       @relation("UserToTimeLog", fields: [userId], references: [id])
+  projectId    Int?
+  project      Project?   @relation(fields: [projectId], references: [id])
+  freelancer   Freelancer @relation("FreelancerToTimeLog", fields: [freelancerId], references: [id])
+  freelancerId Int
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model JobTimer {
+  id        Int            @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime?
+  taskId    Int
+  task      Task           @relation(fields: [taskId], references: [id])
+  userId    Int
+  user      User           @relation("UserToJobTimer", fields: [userId], references: [id])
+  status    JobTimerStatus @default(ACTIVE)
+  duration  Int?
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model BudgetInformation {
+  id                         Int                  @id @default(autoincrement())
+  budget                     Int
+  currency                   String
+  paymentMethod              PaymentMethodType
+  paymentFrequency           PaymentFrequencyType
+  budgetStatus               PaymentStatusType
+  budgetDate                 DateTime
+  freelancerBudget           Int
+  freelancerBudgetPercentage Int
+  companyBudget              Int
+  project                    Project?
+
+  @@index([id])
+}
+
+model ProjectTeam {
+  id          Int          @id @default(autoincrement())
+  freelancers Freelancer[] @relation("ProjectTeamToFreelancer")
+  project     Project      @relation(fields: [projectId], references: [id])
+  projectId   Int
+
+  @@index([projectId])
+}
+
+model Comment {
+  id          Int          @id @default(autoincrement())
+  content     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  taskId      Int
+  task        Task         @relation(fields: [taskId], references: [id])
+  author      User         @relation("UserToComment", fields: [authorId], references: [id])
+  authorId    Int
+  attachments Attachment[]
+  mentions    Int[] // User IDs that were mentioned
+
+  @@index([taskId])
+  @@index([authorId])
+}
+
+model Milestone {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  dueDate     DateTime
+  status      TaskStatus
+  tasks       Task[]
+  projectId   Int
+  project     Project    @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+model Document {
+  id           Int           @id @default(autoincrement())
+  name         String
+  path         String
+  uploadedAt   DateTime      @default(now())
+  uploadedBy   User          @relation("UserToDocument", fields: [uploadedById], references: [id])
+  uploadedById Int
+  resources    Resource[]    @relation("ResourceDocuments")
+  messages     ChatMessage[] @relation("MessageAttachments")
+
+  @@index([uploadedById])
+}
+
+model ProjectDocument {
+  id              Int               @id @default(autoincrement())
+  fileName        String?
+  description     String?
+  fileURL         String
+  fileSize        Int?
+  fileType        String?
+  uploadedBy      User              @relation("UserToProjectDocument", fields: [uploadedById], references: [id])
+  uploadedById    Int
+  uploadedAt      DateTime          @default(now())
+  taskId          Int?
+  task            Task?             @relation("TaskToDocument", fields: [taskId], references: [id])
+  freelancer      Freelancer?       @relation(fields: [freelancerId], references: [id])
+  freelancerId    Int?
+  projectId       Int
+  Project         Project           @relation(fields: [projectId], references: [id])
+  folderId        Int? // Optional - documents can exist without a folder
+  folder          DocumentFolder?   @relation(fields: [folderId], references: [id])
+  DocumentVersion DocumentVersion[] // Added this relation field
+
+  @@index([taskId])
+  @@index([projectId])
+  @@index([uploadedById])
+  @@index([freelancerId])
+  @@index([folderId])
+}
+
+model DocumentFolder {
+  id          Int               @id @default(autoincrement())
+  name        String
+  description String? // Added description field
+  projectId   Int
+  project     Project           @relation(fields: [projectId], references: [id])
+  createdAt   DateTime          @default(now())
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  createdById Int
+  documents   ProjectDocument[] // One-to-many relation with documents
+  parentId    Int? // For nested folder structure
+  parent      DocumentFolder?   @relation("FolderToFolder", fields: [parentId], references: [id])
+  children    DocumentFolder[]  @relation("FolderToFolder") // For nested folders
+
+  @@index([projectId])
+  @@index([createdById])
+  @@index([parentId])
+}
+
+model DocumentVersion {
+  id            Int             @id @default(autoincrement())
+  document      ProjectDocument @relation(fields: [documentId], references: [id])
+  documentId    Int
+  versionNumber Int
+  fileURL       String
+  fileSize      Int?
+  changedBy     User            @relation(fields: [changedById], references: [id])
+  changedById   Int
+  changeNotes   String?         @db.Text
+  createdAt     DateTime        @default(now())
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
+  @@index([changedById])
+}
+
+model Meeting {
+  id                Int           @id @default(autoincrement())
+  title             String        @db.VarChar(255)
+  description       String?       @db.Text
+  startTime         DateTime
+  endTime           DateTime
+  status            MeetingStatus @default(SCHEDULED)
+  organizer         User          @relation("UserToMeetingOrganizer", fields: [organizerId], references: [id])
+  organizerId       Int
+  participants      User[]        @relation("UserToMeetingParticipant")
+  projectId         Int?
+  project           Project?      @relation(fields: [projectId], references: [id])
+  isClientInitiated Boolean       @default(false)
+  meetingLink       String?
+  meetingNotes      String?
+  meetingAgenda     String?
+  reminderSent      Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([organizerId])
+  @@index([projectId])
+}
+
+model AuditLog {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  action    AuditActionType
+  timestamp DateTime        @default(now())
+  projectId Int?
+  details   String?
+  createdAt DateTime        @default(now())
+  user      User            @relation("UserToAuditLog", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([projectId])
+}
+
+model ProjectRequest {
+  id                 Int                      @id @default(autoincrement())
+  title              String
+  description        String
+  timeline           String?
+  requirements       String?
+  reviewNotes        String?
+  client             Client                   @relation(fields: [clientId], references: [id])
+  clientId           Int
+  resource           Resource                 @relation(fields: [resourceId], references: [id])
+  resourceId         Int
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  status             ProjectRequestStatusType @default(IN_PROGRESS)
+  projectId          Int?                     @unique
+  project            Project?                 @relation(fields: [projectId], references: [id])
+  convertedToProject Project?                 @relation("RequestToProject")
+  approvedAt         DateTime?
+
+  @@index([clientId])
+  @@index([resourceId])
+}
+
+model Attachment {
+  id           Int      @id @default(autoincrement())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  path         String
+  url          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  taskId       Int?
+  task         Task?    @relation("TaskToAttachment", fields: [taskId], references: [id])
+  comment      Comment? @relation(fields: [commentId], references: [id])
+  commentId    Int?
+
+  @@index([taskId])
+  @@index([commentId])
+}
+
+model KanbanBoard {
+  id        Int            @id @default(autoincrement())
+  name      String
+  project   Project?
+  projectId Int?           @unique
+  columns   KanbanColumn[]
+}
+
+model KanbanColumn {
+  id      Int         @id @default(autoincrement())
+  name    String
+  order   Int
+  tasks   Task[]
+  board   KanbanBoard @relation(fields: [boardId], references: [id])
+  boardId Int
+
+  @@index([boardId])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  taskId    Int?
+  task      Task?    @relation(fields: [taskId], references: [id])
+  userId    Int
+  user      User     @relation("UserToFavorite", fields: [userId], references: [id])
+  projectId Int?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+model Deliverable {
+  id               Int                   @id @default(autoincrement())
+  projectId        Int
+  project          Project               @relation(fields: [projectId], references: [id])
+  taskId           Int                   @unique
+  task             Task                  @relation(fields: [taskId], references: [id])
+  title            String                @db.VarChar(255)
+  description      String?               @db.Text
+  dueDate          DateTime?
+  status           DeliverableStatus     @default(DRAFT)
+  priority         TaskPriorityType      @default(MEDIUM)
+  attachments      Json?
+  assignees        User[]                @relation("DeliverableAssignees")
+  feedbacks        DeliverableFeedback[]
+  comments         DeliverableComment[]
+  version          Int?
+  revisionNotes    String?               @db.Text
+  clientApproval   Boolean?              @default(false)
+  feedbackRequired Boolean?              @default(false)
+
+  // Fields merged from Outcome model
+  completionDate     DateTime?
+  acceptanceDate     DateTime?
+  revisionRequests   String[]
+  finalPaymentStatus PaymentStatusType?
+  metrics            Json?
+  rating             Int?
+  clientFeedback     String?            @db.Text
+
+  // Fields from ReviewOutcome to consider including
+  likes                  Int? // For social media/video projects
+  shares                 Int? // For social media/video projects
+  views                  Int? // For content-based projects
+  downloads              Int? // For software/digital products
+  sales                  Int? // For e-commerce/marketing projects
+  conversions            Int? // For advertising/marketing projects
+  watchTime              Int? // In seconds
+  retentionRate          Float? // Percentage
+  clickThroughRate       Float? // Percentage
+  conversionRate         Float? // Percentage
+  engagement             Float? // Percentage
+  demographics           Json? // Viewer demographics data
+  geographicDistribution Json? // Geographic view distribution
+  deviceStats            Json? // Views by device type
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  relatedTasks Task[] @relation("RelatedTasksToDeliverables")
+
+  @@index([projectId])
+  @@index([taskId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([clientApproval])
+}
+
+model DeliverableFeedback {
+  id             Int            @id @default(autoincrement())
+  deliverableId  Int
+  deliverable    Deliverable    @relation(fields: [deliverableId], references: [id])
+  userId         Int
+  user           User           @relation(fields: [userId], references: [id])
+  feedback       String         @db.Text
+  attachments    Json?
+  status         FeedbackStatus @default(PENDING)
+  isReadByPM     Boolean        @default(false)
+  isReadByClient Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([deliverableId])
+  @@index([userId])
+  @@index([status])
+}
+
+model DeliverableComment {
+  id            Int                  @id @default(autoincrement())
+  deliverableId Int
+  deliverable   Deliverable          @relation(fields: [deliverableId], references: [id])
+  userId        Int
+  user          User                 @relation("UserToDeliverableComment", fields: [userId], references: [id])
+  content       String               @db.Text
+  attachments   Json?
+  parentId      Int?
+  parent        DeliverableComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       DeliverableComment[] @relation("CommentReplies")
+  mentions      Int[]
+  isReadBy      Int[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([deliverableId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model VideoTaskRequest {
+  id              Int                      @id @default(autoincrement())
+  title           String                   @db.VarChar(255)
+  description     String                   @db.Text
+  additionalInfo  String?                  @db.Text
+  outcomes        String?                  @db.Text
+  videoType       VideoType
+  requestedLength Int
+  priority        TaskPriorityType
+  deadline        DateTime
+  mediaSource     MediaSource
+  mediaUrl        String?
+  subtitlesNeeded Boolean                  @default(false)
+  voiceoverNeeded Boolean                  @default(false)
+  scriptProvided  Boolean                  @default(false)
+  musicProvided   Boolean                  @default(false)
+  client          Client                   @relation(fields: [clientId], references: [id])
+  clientId        Int
+  project         Project                  @relation(fields: [projectId], references: [id])
+  projectId       Int
+  status          ProjectRequestStatusType @default(IN_PROGRESS)
+  createdTask     Task?                    @relation("TaskFromVideoRequest", fields: [createdTaskId], references: [id])
+  createdTaskId   Int?                     @unique
+  // reviewedBy      User?          @relation("ReviewerForVideoTaskRequest", fields: [reviewedById], references: [id])
+  // reviewedById    Int?
+  reviewNotes     String?                  @db.Text
+  approvedAt      DateTime?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  // @@index([reviewedById])
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([status])
+  @@index([createdTaskId])
+}
+
+model GuestSchedule {
+  id          String  @id @default(uuid())
+  // Guest Information
+  email       String?
+  firstName   String
+  lastName    String
+  companyName String?
+  phoneNumber String?
+
+  // Video Editing Questions
+  currentEditingSolution String?
+  frustrations           String[]
+  monthlyPlanPreference  String?
+  notes                  String?
+  country                String?
+
+  // Scheduling Attributes
+  scheduledDate DateTime? // Date and time of the scheduled appointment
+  duration      Int? // Duration in minutes (optional)
+  timeZone      String? // Timezone of the scheduled time
+  meetingType   String? // e.g., "video call", "phone call", "in-person"
+  meetingLink   String? // URL for virtual meetings
+
+  // Status Tracking
+  status       String  @default("pending") // "pending", "confirmed", "canceled", "completed", "expired"
+  isActive     Boolean @default(true)
+  reminderSent Boolean @default(false) // Track if reminder was sent
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  canceledAt DateTime? // When the appointment was canceled
+
+  // Indexes for better query performance
+  @@index([status])
+  @@index([email])
+}
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../../src/generated/prisma" // `output` is required
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+
+  //  // Add this line for local development
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// System Configuration
+model SystemSettings {
+  id                      String   @id @default(uuid())
+  creditPerReferral       Int      @default(100)
+  referralExpirationDays  Int      @default(60)
+  minPurchaseForCredit    Boolean  @default(false)
+  referralBonusOnPurchase Int      @default(50)
+  createdAt               DateTime @default(now())
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isEnabled   Boolean  @default(false)
+  percentage  Int      @default(100) // Percentage of users who get the feature
+  rules       Json? // Complex rules for enabling the feature
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// * Pricing Module And Subscription Management
+
+model Referral {
+  id                 Int                 @id @default(autoincrement())
+  referringClient    Client              @relation("ReferringClient", fields: [referringClientId], references: [id])
+  referredClient     Client              @relation("ReferredClients", fields: [referredClientId], references: [id])
+  referringClientId  Int
+  referredClientId   Int
+  referredIp         String?
+  referredUserAgent  String?
+  referredLocation   String?
+  referralDate       DateTime            @default(now())
+  status             String // "pending", "accepted", "completed"
+  discountCredits    Int // Amount of discount given to referring client
+  discountApplied    Boolean             @default(false)
+  expiryDate         DateTime // When the referral offer expires
+  notes              String?
+  referralLink       String              @unique // The generated unique referral link
+  couponCode         String // The coupon code for the referral
+  linkClicks         Int                 @default(0) // Track number of clicks
+  signups            Int                 @default(0) // Track successful signups
+  activeUsers        Int                 @default(0) // Track active referred users
+  rewardsEarned      Decimal             @default(0) @db.Decimal(10, 2) // Track total rewards earned
+  lastClickedAt      DateTime? // Track last click timestamp
+  clicks             ReferralClick[] // Relation to track detailed click analytics
+  creditTransactions CreditTransaction[] // Added this relation field
+  ReferralAnalytics  ReferralAnalytics[] // Added this relation field
+
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([referringClientId, referredClientId])
+  @@index([referringClientId])
+  @@index([referredClientId])
+  @@index([referralLink])
+  @@index([couponCode])
+}
+
+model ReferralClick {
+  id         Int      @id @default(autoincrement())
+  referral   Referral @relation(fields: [referralId], references: [id])
+  referralId Int
+  clickedAt  DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+  location   String?
+  converted  Boolean  @default(false) // Whether this click led to a signup
+
+  @@index([referralId])
+  @@index([clickedAt])
+}
+
+model ReferralAnalytics {
+  id               String   @id @default(uuid())
+  referral         Referral @relation(fields: [referralId], references: [id])
+  referralId       Int
+  conversionRate   Float?
+  averageSpend     Float?
+  retentionRate    Float?
+  campaignSource   String?
+  deviceBreakdown  Json?
+  locationData     Json?
+  timeToConversion Int? // In days
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([referralId])
+}
+
+model PlanStatistics {
+  id            Int    @id @default(autoincrement())
+  totalProjects Int
+  totalClients  Int
+  totalEarnings Int
+  Plan          Plan[]
+}
+
+model CreditTransaction {
+  id             String          @id @default(cuid())
+  client         Client          @relation(fields: [clientId], references: [id])
+  clientId       Int // Changed from String to Int
+  type           TransactionType
+  amount         Int
+  remaining      Int
+  expirationDate DateTime?
+  description    String?
+  subscription   Subscription?   @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String? // Changed from String to Int
+  referral       Referral?       @relation(fields: [referralId], references: [id])
+  referralId     Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model CreditUsageAnalytics {
+  id              String   @id @default(uuid())
+  clientId        Int
+  client          Client   @relation(fields: [clientId], references: [id])
+  period          String // e.g., "2023-05" for monthly analytics
+  totalUsed       Int
+  byServiceType   Json // Breakdown by service type
+  peakUsageDays   Json? // Days with highest usage
+  unusualActivity Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@unique([clientId, period])
+  @@index([clientId])
+}
+
+model CustomPlanRequest {
+  id                String   @id @default(cuid())
+  clients           Client   @relation(fields: [clientId], references: [id])
+  clientId          Int
+  requestedCredits  Int
+  requestedBrands   Int
+  durationMonths    Int
+  status            String   @default("PENDING")
+  stripePaymentLink String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Subscription Core
+
+model SubscriptionHistory {
+  id             String             @id @default(uuid())
+  subscription   Subscription       @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+  planId         String
+  priceId        String?
+  status         SubscriptionStatus
+  startDate      DateTime
+  endDate        DateTime
+  reason         String?
+  createdAt      DateTime           @default(now())
+
+  @@index([subscriptionId])
+}
+
+model Subscription {
+  id                  String               @id @default(uuid())
+  client              Client               @relation(fields: [clientId], references: [id])
+  clientId            Int                  @unique
+  plan                Plan                 @relation(fields: [planId], references: [id])
+  planId              String
+  price               PlanPrice?           @relation(fields: [priceId], references: [id])
+  priceId             String?
+  customCredits       Int?
+  status              SubscriptionStatus   @default(ACTIVE)
+  invoiceId           Int?
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  baseCreditsUsed     Int                  @default(0)
+  referralCreditsUsed Int                  @default(0)
+  brandsUsed          Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  invoice             Invoice[]
+  paymentTransactions PaymentTransaction[]
+  billingHistory      BillingHistory[]
+
+  // Relationships
+  creditConsumptions  CreditConsumption[]
+  referralCredits     ReferralCredit[]
+  brandConsumptions   BrandConsumption[]
+  CreditTransaction   CreditTransaction[]
+  DiscountRedemption  DiscountRedemption[]
+  subscriptionHistory SubscriptionHistory[] // Added this relation field
+}
+
+// Plan Structure
+model Plan {
+  id             String           @id @default(uuid())
+  name           String           @unique
+  description    String?
+  isCustom       Boolean          @default(false)
+  features       PlanFeature[]
+  prices         PlanPrice[]
+  subscriptions  Subscription[]
+  information    PlanInformation?
+  PlanStatistics PlanStatistics   @relation(fields: [planStatisticsId], references: [id])
+
+  planStatisticsId Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// Plan Features
+model PlanFeature {
+  id               String   @id @default(uuid())
+  plan             Plan     @relation(fields: [planId], references: [id])
+  planId           String
+  feature          Feature  @relation(fields: [featureId], references: [id])
+  featureId        String
+  value            String
+  expirationPolicy String   @default("END_OF_BILLING_CYCLE")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([planId, featureId])
+}
+
+// Feature Catalog
+model Feature {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  description String
+  key         String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  PlanFeature PlanFeature[]
+}
+
+// Pricing Options
+model PlanPrice {
+  id           String         @id @default(uuid())
+  plan         Plan           @relation(fields: [planId], references: [id])
+  planId       String
+  credits      Int?
+  amount       Decimal
+  billingCycle BillingCycle
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Subscription Subscription[]
+
+  @@unique([planId, credits, billingCycle])
+}
+
+// Service Pricing
+model CreditValue {
+  id                 String               @id @default(uuid())
+  serviceType        String               @unique
+  name               String
+  description        String?
+  baseUnit           String               @default("MINUTE")
+  creditsPerUnit     Int
+  minUnits           Int                  @default(1)
+  maxUnits           Int?
+  tieredPricing      Json?
+  isActive           Boolean              @default(true)
+  category           String
+  consumptions       CreditConsumption[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  DiscountRedemption DiscountRedemption[]
+
+  @@index([serviceType])
+  @@index([category])
+  @@index([baseUnit])
+}
+
+// Credit Usage Tracking
+model CreditConsumption {
+  id               String          @id @default(uuid())
+  subscription     Subscription    @relation(fields: [subscriptionId], references: [id])
+  subscriptionId   String
+  service          CreditValue?    @relation(fields: [serviceId], references: [id])
+  serviceId        String?
+  units            Float
+  unitType         String
+  creditRate       Int
+  totalCredits     Int
+  discountApplied  Int             @default(0)
+  creditType       CreditType      @default(BASE)
+  referralCredit   ReferralCredit? @relation("CreditConsumptionToReferralCredit")
+  referralCreditId String?
+  description      String?
+  createdAt        DateTime        @default(now())
+
+  @@index([serviceId])
+}
+
+// Referral System
+model ReferralCredit {
+  id                String               @id @default(uuid())
+  subscription      Subscription         @relation(fields: [subscriptionId], references: [id])
+  subscriptionId    String
+  creditAmount      Int
+  referralDate      DateTime             @default(now())
+  expiresAt         DateTime
+  referredUserEmail String?
+  status            ReferralCreditStatus @default(ACTIVE)
+  consumedIn        CreditConsumption?   @relation("CreditConsumptionToReferralCredit", fields: [consumedInId], references: [id])
+  consumedInId      String?              @unique // Added unique constraint
+}
+
+// Brand Management
+model BrandConsumption {
+  id             String       @id @default(uuid())
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+  brandId        String
+  action         String
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+}
+
+// Discount System
+model Discount {
+  id             String                @id @default(uuid())
+  code           String?               @unique
+  name           String
+  description    String?
+  type           DiscountType          @default(PERCENTAGE)
+  value          Decimal
+  maxDiscount    Decimal?
+  minRequirement Json?
+  appliesTo      DiscountTarget        @default(PLANS)
+  planIds        String[]              @default([])
+  serviceTypes   String[]              @default([])
+  validFrom      DateTime?
+  validUntil     DateTime?
+  schedule       Json?
+  timezone       String?               @default("UTC")
+  maxUses        Int?
+  userMaxUses    Int?                  @default(1)
+  isActive       Boolean               @default(true)
+  redemptions    DiscountRedemption[]
+  holidayRules   HolidayDiscountRule[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([code])
+  @@index([validUntil])
+}
+
+model HolidayDiscountRule {
+  id          String   @id @default(uuid())
+  discount    Discount @relation(fields: [discountId], references: [id])
+  discountId  String
+  holidayName String
+  date        DateTime
+  isRecurring Boolean  @default(true)
+  multiplier  Decimal  @default(1.5)
+  createdAt   DateTime @default(now())
+}
+
+model DiscountRedemption {
+  id             String       @id @default(uuid())
+  discount       Discount     @relation(fields: [discountId], references: [id])
+  discountId     String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+  client         Client       @relation(fields: [clientId], references: [id])
+  clientId       Int
+  appliedTo      String
+  appliedAmount  Decimal
+  creditValue    CreditValue? @relation(fields: [creditValueId], references: [id])
+  creditValueId  String?
+  createdAt      DateTime     @default(now())
+
+  @@index([discountId])
+  @@index([clientId])
+}
+
+// Pricing Display
+model PlanInformation {
+  id               String               @id @default(uuid())
+  plan             Plan                 @relation(fields: [planId], references: [id])
+  planId           String               @unique
+  displayName      String
+  shortDescription String
+  priceDescription String
+  highlight        Boolean              @default(false)
+  mostPopular      Boolean              @default(false)
+  buttonText       String               @default("Get Started")
+  order            Int                  @default(0)
+  monthlyPrice     Decimal?
+  annualPrice      Decimal?
+  creditIncluded   Int?
+  isCustom         Boolean              @default(false)
+  features         PlanFeatureDisplay[]
+  comparisons      PlanComparison[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+}
+
+model PlanFeatureDisplay {
+  id              String          @id @default(uuid())
+  planInformation PlanInformation @relation(fields: [planInfoId], references: [id])
+  planInfoId      String
+  featureText     String
+  isAvailable     Boolean         @default(true)
+  isHighlight     Boolean         @default(false)
+  tooltip         String?
+  order           Int             @default(0)
+  createdAt       DateTime        @default(now())
+}
+
+// Plan Comparison
+model PlanComparison {
+  id             String            @id @default(uuid())
+  title          String
+  description    String?
+  plans          PlanInformation[]
+  featuredPlanId String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int? // Changed to Int to match User.id
+  user      User?    @relation("UserToSession", fields: [userId], references: [id])
+}
+
+//* model User Management Module
+model User {
+  id                     Int                      @id @default(autoincrement())
+  email                  String                   @unique
+  password               String?
+  firstName              String
+  middleName             String?
+  lastName               String
+  role                   Role                     @default(FREELANCER)
+  isEmailVerified        Boolean                  @default(false)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  provider               String?
+  providerId             String?
+  avatar                 String?
+  status                 UserStatus               @default(ACTIVE)
+  freelancer             Freelancer?              @relation("UserToFreelancer")
+  // client                 Client?                  @relation("UserToClient", fields: [clientId], references: [id])
+  // clientId               Int?                     @unique
+  client                 Client?
+  projectManager         ProjectManager?          @relation("UserToProjectManager")
+  signedContracts        Contract[]               @relation("ContractSignedBy")
+  assignedTasks          Task[]                   @relation("TaskAssignedTo")
+  taskAssignedBy         Task[]                   @relation("TaskAssignedBy")
+  // Relations
+  activities             ProjectActivity[]        @relation("UserToActivity")
+  comments               Comment[]                @relation("UserToComment")
+  documents              Document[]               @relation("UserToDocument")
+  favorites              Favorite[]               @relation("UserToFavorite")
+  timeLogs               TimeLog[]                @relation("UserToTimeLog")
+  jobTimers              JobTimer[]               @relation("UserToJobTimer")
+  tokens                 Token[]                  @relation("UserToToken")
+  address                Address?                 @relation("UserToAddress")
+  security               Security?                @relation("UserToSecurity")
+  preferences            UserPreferences?         @relation("UserToPreferences")
+  notificationPrefs      NotificationPreferences? @relation("UserToNotificationPrefs")
+  projects               Project[]                @relation("UserToProject")
+  uploadedDocs           ProjectDocument[]        @relation("UserToProjectDocument")
+  terminatedProjects     TerminationInformation[] @relation("UserToTermination")
+  reviews                Review[]                 @relation("UserToReview")
+  auditLogs              AuditLog[]               @relation("UserToAuditLog")
+  organizedMeetings      Meeting[]                @relation("UserToMeetingOrganizer")
+  meetingParticipations  Meeting[]                @relation("UserToMeetingParticipant")
+  sentMessages           ChatMessage[]            @relation("UserToMessageSent")
+  receivedMessages       ChatMessage[]            @relation("UserToMessageReceived")
+  chatRoomParticipations ChatRoom[]               @relation("UserToChatRoomParticipant")
+  adminChatRooms         ChatRoom[]               @relation("UserToChatRoomAdmin")
+  managedChatRooms       ChatRoom[]               @relation("UserToChatRoomManager")
+  receivedNotifications  Notification[]           @relation("UserToNotificationReceived")
+  sentNotifications      Notification[]           @relation("UserToNotificationSent")
+  sessions               Session[]                @relation("UserToSession")
+  notifications          Notification[]           @relation("UserToNotification")
+  createdFolders         DocumentFolder[]
+  loginAudits            UserLoginAudit[]
+  DocumentVersion        DocumentVersion[]
+  ApiUsage               ApiUsage[]
+  uploadedFiles          File[]                   @relation("UserUploadedFile")
+  deliverableAssignments Deliverable[]            @relation("DeliverableAssignees")
+  deliverableFeedbacks   DeliverableFeedback[]
+  deliverableComments    DeliverableComment[]     @relation("UserToDeliverableComment")
+
+  // Learning Library
+
+  libresources    LibraryResource[]    @relation("ResourceAuthor")
+  libprogress     LibraryProgress[]
+  libcomments     LibraryComment[]
+  libreplies      LibraryReply[]
+  libfavorites    LibraryFavorite[]
+  libpins         LibraryPin[]
+  libcertificates LibraryCertificate[]
+  libreactions    LibraryReaction[]
+
+  @@index([email])
+  @@index([provider, providerId])
+}
+
+model Token {
+  id          Int      @id @default(autoincrement())
+  token       String
+  type        String
+  expires     DateTime
+  blacklisted Boolean
+  email       String? // Add this field
+  user        User?    @relation("UserToToken", fields: [userId], references: [id])
+  userId      Int? // Make userId optional
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([token])
+}
+
+model Address {
+  id            Int      @id @default(autoincrement())
+  street        String
+  city          String
+  state         String
+  country       String
+  postalCode    String
+  User          User     @relation("UserToAddress", fields: [userId], references: [id])
+  userId        Int      @unique
+  clientBilling Client[] @relation("ClientBillingAddress")
+
+  @@index([userId])
+}
+
+model Security {
+  id               Int      @id @default(autoincrement())
+  twoFactorEnabled Boolean  @default(false)
+  isCodeVerified   Boolean  @default(false)
+  twoFactorSecret  String?
+  backupCodes      String[]
+  User             User     @relation("UserToSecurity", fields: [userId], references: [id])
+  userId           Int      @unique
+
+  @@index([userId])
+}
+
+model UserPreferences {
+  id             Int     @id @default(autoincrement())
+  color          String?
+  theme          String  @default("light")
+  layout         String  @default("default")
+  fontSize       Int     @default(14)
+  language       String  @default("en")
+  timezone       String  @default("UTC")
+  emailFrequency String  @default("daily")
+  dateFormat     String  @default("MM/DD/YYYY")
+  timeFormat     String  @default("12-hour")
+  privacy        Privacy @relation(fields: [privacyId], references: [id])
+  privacyId      Int
+  User           User    @relation("UserToPreferences", fields: [userId], references: [id])
+  userId         Int     @unique
+
+  @@index([userId])
+}
+
+model Privacy {
+  id               Int               @id @default(autoincrement())
+  analyticsSharing Boolean           @default(true)
+  personalizedAds  Boolean           @default(true)
+  dataRetention    String            @default("1 year")
+  UserPreferences  UserPreferences[]
+}
+
+model NotificationPreferences {
+  id              Int     @id @default(autoincrement())
+  emailEnabled    Boolean @default(true)
+  pushEnabled     Boolean @default(true)
+  smsEnabled      Boolean @default(false)
+  accountActivity Boolean @default(true)
+  newFeatures     Boolean @default(true)
+  marketing       Boolean @default(false)
+  frequency       String  @default("daily")
+  quietHoursStart String  @default("22:00")
+  quietHoursEnd   String  @default("08:00")
+  User            User    @relation("UserToNotificationPrefs", fields: [userId], references: [id])
+  userId          Int     @unique
+
+  @@index([userId])
+}
+
+model UserLoginAudit {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  email        String
+  ip           String?
+  organization String?
+  asn          String?
+  city         String?
+  region       String?
+  country      String?
+  latitude     Float?
+  longitude    Float?
+  timezone     String?
+  userAgent    String?
+  platform     String?
+  host         String?
+  currency     String?
+  language     String?
+  loginTime    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model ApiUsage {
+  id        String   @id @default(uuid())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  endpoint  String
+  method    String
+  status    Int
+  duration  Int // Response time in ms
+  timestamp DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([endpoint])
+  @@index([timestamp])
+}

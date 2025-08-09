@@ -1,0 +1,38 @@
+model GuestSchedule {
+  id          String  @id @default(uuid())
+  // Guest Information
+  email       String?
+  firstName   String
+  lastName    String
+  companyName String?
+  phoneNumber String?
+
+  // Video Editing Questions
+  currentEditingSolution String?
+  frustrations           String[]
+  monthlyPlanPreference  String?
+  notes                  String?
+  country                String?
+
+  // Scheduling Attributes
+  scheduledDate DateTime? // Date and time of the scheduled appointment
+  duration      Int? // Duration in minutes (optional)
+  timeZone      String? // Timezone of the scheduled time
+  meetingType   String? // e.g., "video call", "phone call", "in-person"
+  meetingLink   String? // URL for virtual meetings
+
+  // Status Tracking
+  status       String  @default("pending") // "pending", "confirmed", "canceled", "completed", "expired"
+  isActive     Boolean @default(true)
+  reminderSent Boolean @default(false) // Track if reminder was sent
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  canceledAt DateTime? // When the appointment was canceled
+
+  // Indexes for better query performance
+  @@index([status])
+  @@index([email])
+}
+

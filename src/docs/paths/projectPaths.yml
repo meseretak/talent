@@ -1,0 +1,231 @@
+paths:
+  /projects:
+    post:
+      summary: Create a new project
+      description: Only project managers can create new projects.
+      tags: [Projects]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - label
+                - description
+                - startDate
+                - endDate
+                - clientId
+              properties:
+                title:
+                  type: string
+                label:
+                  type: string
+                description:
+                  type: string
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+                clientId:
+                  type: integer
+                budget:
+                  type: number
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /projects/{id}:
+    get:
+      summary: Get a project by ID
+      description: Get detailed project information including tasks and resources.
+      tags: [Projects]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Project ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /projects/{id}/status:
+    patch:
+      summary: Update project status
+      description: Project managers can update project status.
+      tags: [Projects]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Project ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [DRAFT, ACTIVE, ON_HOLD, COMPLETED, CANCELLED]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /projects/search:
+    get:
+      summary: Search projects
+      description: Search and filter projects based on various criteria.
+      tags: [Projects]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Comma-separated project statuses
+        - in: query
+          name: clientId
+          schema:
+            type: integer
+          description: Client ID
+        - in: query
+          name: projectManagerId
+          schema:
+            type: integer
+          description: Project Manager ID
+        - in: query
+          name: freelancerId
+          schema:
+            type: integer
+          description: Freelancer ID
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          description: Start date
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          description: End date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  totalResults:
+                    type: integer
+
+  /projects/{id}/freelancers:
+    post:
+      summary: Add freelancer to project
+      description: Project managers can add freelancers to projects.
+      tags: [Projects]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Project ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - freelancerId
+              properties:
+                freelancerId:
+                  type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /projects/{id}/activities:
+    get:
+      summary: Get project activities
+      description: Retrieve all activities related to a project.
+      tags: [Projects]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Project ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '404':
+          $ref: '#/components/responses/NotFound'

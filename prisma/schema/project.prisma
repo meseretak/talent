@@ -1,0 +1,594 @@
+// Removing the ReviewOutcome model completely since its functionality is now in Deliverable
+
+// * Model Resource Information
+model Resource {
+  id                    Int                 @id @default(autoincrement())
+  name                  String
+  description           String?
+  resourceType          ResourceType
+  inspirationLinks      String[]
+  referenceDocuments    Document[]          @relation("ResourceDocuments")
+  mediaSpecifications   MediaSpecifications @relation(fields: [mediaSpecificationsId], references: [id])
+  brandingGuidelines    BrandingGuidelines  @relation(fields: [brandingGuidelinesId], references: [id])
+  referenceLinks        String[]
+  tags                  String[]
+  status                ResourceStatus
+  createdAt             DateTime
+  updatedAt             DateTime?
+  client                Client?             @relation(fields: [clientId], references: [id])
+  clientId              Int?
+  mediaSpecificationsId Int
+  brandingGuidelinesId  Int
+  project               Project?            @relation(fields: [projectId], references: [id])
+  projectId             Int?
+  projectRequests       ProjectRequest[]
+
+  @@index([clientId])
+  @@index([mediaSpecificationsId])
+  @@index([brandingGuidelinesId])
+  @@index([projectId])
+}
+
+model MediaSpecifications {
+  id         Int              @id @default(autoincrement())
+  videoType  VideoType?
+  audioType  AudioType?
+  designType DesignType?
+  codeType   ProgrammingType?
+  Resource   Resource[]
+}
+
+model BrandingGuidelines {
+  id             Int        @id @default(autoincrement())
+  primaryColor   String?
+  secondaryColor String?
+  accentColors   String[]
+  typography     String?
+  logoUrl        String?
+  brandVoice     String?
+  styleGuideUrl  String?
+  Resource       Resource[]
+}
+
+//* Model Project Management Module
+
+model Project {
+  id                 Int                     @id @default(autoincrement())
+  name               String                  @db.VarChar(255)
+  description        String                  @db.Text
+  status             ProjectStatusType       @default(IN_PROGRESS)
+  startDate          DateTime
+  endDate            DateTime
+  budget             Float
+  creator            User                    @relation("UserToProject", fields: [creatorId], references: [id])
+  creatorId          Int
+  projectManager     ProjectManager?         @relation("ProjectToProjectManager", fields: [projectManagerId], references: [id])
+  projectManagerId   Int?
+  client             Client                  @relation("ClientToProject", fields: [clientId], references: [id])
+  clientId           Int
+  freelancers        Freelancer[]            @relation("FreelancerToProject")
+  activities         ProjectActivity[]       @relation("ProjectToActivity")
+  budgetInfo         BudgetInformation?      @relation(fields: [budgetInfoId], references: [id])
+  budgetInfoId       Int?                    @unique
+  kanbanBoard        KanbanBoard?            @relation(fields: [kanbanBoardId], references: [id])
+  kanbanBoardId      Int?                    @unique
+  terminationInfo    TerminationInformation? @relation(fields: [terminationInfoId], references: [id])
+  terminationInfoId  Int?                    @unique
+  meetings           Meeting[]
+  chatRooms          ChatRoom[]
+  reviews            Review[]
+  projectRequests    ProjectRequest[]
+  contracts          Contract[]
+  timeLogs           TimeLog[]
+  projectTeams       ProjectTeam[]
+  milestones         Milestone[]
+  resources          Resource[]
+  favorites          Favorite[]
+  ProjectDocument    ProjectDocument[]
+  folders            DocumentFolder[]
+  Task               Task[]
+  Color              String
+  deliverables       Deliverable[] // Contains the metrics formerly in ReviewOutcome
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  createdFromRequest ProjectRequest?         @relation("RequestToProject", fields: [requestId], references: [id])
+  requestId          Int?                    @unique
+  blockedTalents     Freelancer[]            @relation("BlockedTalentsOnProject")
+  videoTaskRequests  VideoTaskRequest[]
+
+  @@index([creatorId])
+  @@index([projectManagerId])
+  @@index([clientId])
+  @@index([budgetInfoId])
+  @@index([kanbanBoardId])
+  @@index([terminationInfoId])
+}
+
+model Task {
+  id                    Int               @id @default(autoincrement())
+  title                 String            @db.VarChar(255)
+  description           String            @db.Text
+  status                TaskStatus        @default(IN_PROGRESS)
+  priority              TaskPriorityType  @default(MEDIUM)
+  dueDate               DateTime
+  estimatedHours        Float
+  actualHours           Float?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  assignedTo            User?             @relation("TaskAssignedTo", fields: [assignedToId], references: [id])
+  assignedToId          Int?
+  assignedBy            User?             @relation("TaskAssignedBy", fields: [assignedById], references: [id])
+  assignedById          Int?
+  assignedAt            DateTime?
+  parentTaskId          Int?
+  subTasks              SubTask[]         @relation("SubTasks")
+  projectActivities     ProjectActivity[] @relation("TaskToActivityMany")
+  freelancer            Freelancer?       @relation("TaskToFreelancer", fields: [freelancerId], references: [id])
+  freelancerId          Int?
+  documents             ProjectDocument[] @relation("TaskToDocument")
+  projectManager        ProjectManager?   @relation("TaskToProjectManager", fields: [projectManagerId], references: [id])
+  projectManagerId      Int?
+  timeLogs              TimeLog[]
+  jobTimers             JobTimer[]
+  comments              Comment[]
+  milestone             Milestone?        @relation(fields: [milestoneId], references: [id])
+  milestoneId           Int?
+  attachments           Attachment[]      @relation("TaskToAttachment")
+  kanbanColumn          KanbanColumn?     @relation(fields: [kanbanColumnId], references: [id])
+  kanbanColumnId        Int?
+  favorites             Favorite[]
+  projectId             Int?
+  Project               Project?          @relation(fields: [projectId], references: [id])
+  activity              ProjectActivity?  @relation("TaskToActivity")
+  activityId            Int?              @unique
+  deliverable           Deliverable?      @relation()
+  relatedToDeliverables Deliverable[]     @relation("RelatedTasksToDeliverables")
+  videoTaskRequest      VideoTaskRequest? @relation("TaskFromVideoRequest")
+
+  @@index([assignedToId])
+  @@index([assignedById])
+  @@index([parentTaskId])
+  @@index([freelancerId])
+  @@index([projectManagerId])
+  @@index([milestoneId])
+  @@index([kanbanColumnId])
+}
+
+model SubTask {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(255)
+  completed    Boolean  @default(false)
+  parentTask   Task?    @relation("SubTasks", fields: [parentTaskId], references: [id])
+  parentTaskId Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([parentTaskId])
+}
+
+model ProjectActivity {
+  id           Int                 @id @default(autoincrement())
+  type         ProjectActivityType
+  description  String
+  createdAt    DateTime            @default(now())
+  user         User                @relation("UserToActivity", fields: [userId], references: [id])
+  userId       Int
+  project      Project             @relation("ProjectToActivity", fields: [projectId], references: [id])
+  projectId    Int
+  task         Task?               @relation("TaskToActivity", fields: [taskId], references: [id])
+  taskId       Int?                @unique
+  relatedTasks Task[]              @relation("TaskToActivityMany")
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([taskId])
+}
+
+model TimeLog {
+  id           Int        @id @default(autoincrement())
+  startTime    DateTime
+  endTime      DateTime?
+  taskId       Int
+  task         Task       @relation(fields: [taskId], references: [id])
+  userId       Int
+  user         User       @relation("UserToTimeLog", fields: [userId], references: [id])
+  projectId    Int?
+  project      Project?   @relation(fields: [projectId], references: [id])
+  freelancer   Freelancer @relation("FreelancerToTimeLog", fields: [freelancerId], references: [id])
+  freelancerId Int
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model JobTimer {
+  id        Int            @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime?
+  taskId    Int
+  task      Task           @relation(fields: [taskId], references: [id])
+  userId    Int
+  user      User           @relation("UserToJobTimer", fields: [userId], references: [id])
+  status    JobTimerStatus @default(ACTIVE)
+  duration  Int?
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model BudgetInformation {
+  id                         Int                  @id @default(autoincrement())
+  budget                     Int
+  currency                   String
+  paymentMethod              PaymentMethodType
+  paymentFrequency           PaymentFrequencyType
+  budgetStatus               PaymentStatusType
+  budgetDate                 DateTime
+  freelancerBudget           Int
+  freelancerBudgetPercentage Int
+  companyBudget              Int
+  project                    Project?
+
+  @@index([id])
+}
+
+model ProjectTeam {
+  id          Int          @id @default(autoincrement())
+  freelancers Freelancer[] @relation("ProjectTeamToFreelancer")
+  project     Project      @relation(fields: [projectId], references: [id])
+  projectId   Int
+
+  @@index([projectId])
+}
+
+model Comment {
+  id          Int          @id @default(autoincrement())
+  content     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  taskId      Int
+  task        Task         @relation(fields: [taskId], references: [id])
+  author      User         @relation("UserToComment", fields: [authorId], references: [id])
+  authorId    Int
+  attachments Attachment[]
+  mentions    Int[] // User IDs that were mentioned
+
+  @@index([taskId])
+  @@index([authorId])
+}
+
+model Milestone {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  dueDate     DateTime
+  status      TaskStatus
+  tasks       Task[]
+  projectId   Int
+  project     Project    @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+model Document {
+  id           Int           @id @default(autoincrement())
+  name         String
+  path         String
+  uploadedAt   DateTime      @default(now())
+  uploadedBy   User          @relation("UserToDocument", fields: [uploadedById], references: [id])
+  uploadedById Int
+  resources    Resource[]    @relation("ResourceDocuments")
+  messages     ChatMessage[] @relation("MessageAttachments")
+
+  @@index([uploadedById])
+}
+
+model ProjectDocument {
+  id              Int               @id @default(autoincrement())
+  fileName        String?
+  description     String?
+  fileURL         String
+  fileSize        Int?
+  fileType        String?
+  uploadedBy      User              @relation("UserToProjectDocument", fields: [uploadedById], references: [id])
+  uploadedById    Int
+  uploadedAt      DateTime          @default(now())
+  taskId          Int?
+  task            Task?             @relation("TaskToDocument", fields: [taskId], references: [id])
+  freelancer      Freelancer?       @relation(fields: [freelancerId], references: [id])
+  freelancerId    Int?
+  projectId       Int
+  Project         Project           @relation(fields: [projectId], references: [id])
+  folderId        Int? // Optional - documents can exist without a folder
+  folder          DocumentFolder?   @relation(fields: [folderId], references: [id])
+  DocumentVersion DocumentVersion[] // Added this relation field
+
+  @@index([taskId])
+  @@index([projectId])
+  @@index([uploadedById])
+  @@index([freelancerId])
+  @@index([folderId])
+}
+
+model DocumentFolder {
+  id          Int               @id @default(autoincrement())
+  name        String
+  description String? // Added description field
+  projectId   Int
+  project     Project           @relation(fields: [projectId], references: [id])
+  createdAt   DateTime          @default(now())
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  createdById Int
+  documents   ProjectDocument[] // One-to-many relation with documents
+  parentId    Int? // For nested folder structure
+  parent      DocumentFolder?   @relation("FolderToFolder", fields: [parentId], references: [id])
+  children    DocumentFolder[]  @relation("FolderToFolder") // For nested folders
+
+  @@index([projectId])
+  @@index([createdById])
+  @@index([parentId])
+}
+
+model DocumentVersion {
+  id            Int             @id @default(autoincrement())
+  document      ProjectDocument @relation(fields: [documentId], references: [id])
+  documentId    Int
+  versionNumber Int
+  fileURL       String
+  fileSize      Int?
+  changedBy     User            @relation(fields: [changedById], references: [id])
+  changedById   Int
+  changeNotes   String?         @db.Text
+  createdAt     DateTime        @default(now())
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
+  @@index([changedById])
+}
+
+model Meeting {
+  id                Int           @id @default(autoincrement())
+  title             String        @db.VarChar(255)
+  description       String?       @db.Text
+  startTime         DateTime
+  endTime           DateTime
+  status            MeetingStatus @default(SCHEDULED)
+  organizer         User          @relation("UserToMeetingOrganizer", fields: [organizerId], references: [id])
+  organizerId       Int
+  participants      User[]        @relation("UserToMeetingParticipant")
+  projectId         Int?
+  project           Project?      @relation(fields: [projectId], references: [id])
+  isClientInitiated Boolean       @default(false)
+  meetingLink       String?
+  meetingNotes      String?
+  meetingAgenda     String?
+  reminderSent      Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([organizerId])
+  @@index([projectId])
+}
+
+model AuditLog {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  action    AuditActionType
+  timestamp DateTime        @default(now())
+  projectId Int?
+  details   String?
+  createdAt DateTime        @default(now())
+  user      User            @relation("UserToAuditLog", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([projectId])
+}
+
+model ProjectRequest {
+  id                 Int                      @id @default(autoincrement())
+  title              String
+  description        String
+  timeline           String?
+  requirements       String?
+  reviewNotes        String?
+  client             Client                   @relation(fields: [clientId], references: [id])
+  clientId           Int
+  resource           Resource                 @relation(fields: [resourceId], references: [id])
+  resourceId         Int
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  status             ProjectRequestStatusType @default(IN_PROGRESS)
+  projectId          Int?                     @unique
+  project            Project?                 @relation(fields: [projectId], references: [id])
+  convertedToProject Project?                 @relation("RequestToProject")
+  approvedAt         DateTime?
+
+  @@index([clientId])
+  @@index([resourceId])
+}
+
+model Attachment {
+  id           Int      @id @default(autoincrement())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  path         String
+  url          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  taskId       Int?
+  task         Task?    @relation("TaskToAttachment", fields: [taskId], references: [id])
+  comment      Comment? @relation(fields: [commentId], references: [id])
+  commentId    Int?
+
+  @@index([taskId])
+  @@index([commentId])
+}
+
+model KanbanBoard {
+  id        Int            @id @default(autoincrement())
+  name      String
+  project   Project?
+  projectId Int?           @unique
+  columns   KanbanColumn[]
+}
+
+model KanbanColumn {
+  id      Int         @id @default(autoincrement())
+  name    String
+  order   Int
+  tasks   Task[]
+  board   KanbanBoard @relation(fields: [boardId], references: [id])
+  boardId Int
+
+  @@index([boardId])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  taskId    Int?
+  task      Task?    @relation(fields: [taskId], references: [id])
+  userId    Int
+  user      User     @relation("UserToFavorite", fields: [userId], references: [id])
+  projectId Int?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+model Deliverable {
+  id               Int                   @id @default(autoincrement())
+  projectId        Int
+  project          Project               @relation(fields: [projectId], references: [id])
+  taskId           Int                   @unique
+  task             Task                  @relation(fields: [taskId], references: [id])
+  title            String                @db.VarChar(255)
+  description      String?               @db.Text
+  dueDate          DateTime?
+  status           DeliverableStatus     @default(DRAFT)
+  priority         TaskPriorityType      @default(MEDIUM)
+  attachments      Json?
+  assignees        User[]                @relation("DeliverableAssignees")
+  feedbacks        DeliverableFeedback[]
+  comments         DeliverableComment[]
+  version          Int?
+  revisionNotes    String?               @db.Text
+  clientApproval   Boolean?              @default(false)
+  feedbackRequired Boolean?              @default(false)
+
+  // Fields merged from Outcome model
+  completionDate     DateTime?
+  acceptanceDate     DateTime?
+  revisionRequests   String[]
+  finalPaymentStatus PaymentStatusType?
+  metrics            Json?
+  rating             Int?
+  clientFeedback     String?            @db.Text
+
+  // Fields from ReviewOutcome to consider including
+  likes                  Int? // For social media/video projects
+  shares                 Int? // For social media/video projects
+  views                  Int? // For content-based projects
+  downloads              Int? // For software/digital products
+  sales                  Int? // For e-commerce/marketing projects
+  conversions            Int? // For advertising/marketing projects
+  watchTime              Int? // In seconds
+  retentionRate          Float? // Percentage
+  clickThroughRate       Float? // Percentage
+  conversionRate         Float? // Percentage
+  engagement             Float? // Percentage
+  demographics           Json? // Viewer demographics data
+  geographicDistribution Json? // Geographic view distribution
+  deviceStats            Json? // Views by device type
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  relatedTasks Task[] @relation("RelatedTasksToDeliverables")
+
+  @@index([projectId])
+  @@index([taskId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([clientApproval])
+}
+
+model DeliverableFeedback {
+  id             Int            @id @default(autoincrement())
+  deliverableId  Int
+  deliverable    Deliverable    @relation(fields: [deliverableId], references: [id])
+  userId         Int
+  user           User           @relation(fields: [userId], references: [id])
+  feedback       String         @db.Text
+  attachments    Json?
+  status         FeedbackStatus @default(PENDING)
+  isReadByPM     Boolean        @default(false)
+  isReadByClient Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([deliverableId])
+  @@index([userId])
+  @@index([status])
+}
+
+model DeliverableComment {
+  id            Int                  @id @default(autoincrement())
+  deliverableId Int
+  deliverable   Deliverable          @relation(fields: [deliverableId], references: [id])
+  userId        Int
+  user          User                 @relation("UserToDeliverableComment", fields: [userId], references: [id])
+  content       String               @db.Text
+  attachments   Json?
+  parentId      Int?
+  parent        DeliverableComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       DeliverableComment[] @relation("CommentReplies")
+  mentions      Int[]
+  isReadBy      Int[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([deliverableId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model VideoTaskRequest {
+  id              Int            @id @default(autoincrement())
+  title           String         @db.VarChar(255)
+  description     String         @db.Text
+  additionalInfo  String?        @db.Text
+  outcomes        String?        @db.Text
+  videoType       VideoType
+  requestedLength Int
+  priority        TaskPriorityType
+  deadline        DateTime
+  mediaSource     MediaSource
+  mediaUrl        String?
+  subtitlesNeeded Boolean        @default(false)
+  voiceoverNeeded Boolean        @default(false)
+  scriptProvided  Boolean        @default(false)
+  musicProvided   Boolean        @default(false)
+  client          Client         @relation(fields: [clientId], references: [id])
+  clientId        Int
+  project         Project        @relation(fields: [projectId], references: [id])
+  projectId       Int
+  status          ProjectRequestStatusType @default(IN_PROGRESS)
+  createdTask     Task?          @relation("TaskFromVideoRequest", fields: [createdTaskId], references: [id])
+  createdTaskId   Int?           @unique
+  // reviewedBy      User?          @relation("ReviewerForVideoTaskRequest", fields: [reviewedById], references: [id])
+  // reviewedById    Int?
+  reviewNotes     String?        @db.Text
+  approvedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([status])
+  @@index([createdTaskId])
+  // @@index([reviewedById])
+}

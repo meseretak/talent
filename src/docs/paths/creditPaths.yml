@@ -1,0 +1,125 @@
+paths:
+  /credit/subscriptions/{subscriptionId}/credits:
+    get:
+      summary: Get credit balance
+      description: Get the current credit balance for a subscription
+      tags:
+        - Credits
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema:
+            type: integer
+          description: Subscription ID
+      responses:
+        '200':
+          description: Credit balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+                    description: Current credit balance
+                  subscriptionId:
+                    type: integer
+                    description: Subscription ID
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /credit/calculate-cost:
+    post:
+      summary: Calculate service cost
+      description: Calculate the cost of a service in credits
+      tags:
+        - Credits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - serviceType
+                - quantity
+              properties:
+                serviceType:
+                  type: string
+                  description: Type of service
+                quantity:
+                  type: number
+                  description: Quantity of service
+      responses:
+        '200':
+          description: Service cost calculated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cost:
+                    type: number
+                    description: Calculated cost in credits
+                  serviceType:
+                    type: string
+                    description: Type of service
+                  quantity:
+                    type: number
+                    description: Quantity of service
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /credit/consume-credits:
+    post:
+      summary: Consume credits
+      description: Consume credits for a service
+      tags:
+        - Credits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subscriptionId
+                - amount
+                - serviceType
+              properties:
+                subscriptionId:
+                  type: integer
+                  description: Subscription ID
+                amount:
+                  type: number
+                  description: Amount of credits to consume
+                serviceType:
+                  type: string
+                  description: Type of service
+      responses:
+        '200':
+          description: Credits consumed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Credits consumed successfully'
+                  remainingBalance:
+                    type: number
+                    description: Remaining credit balance
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'

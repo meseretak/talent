@@ -1,0 +1,21 @@
+model File {
+  id              Int       @id @default(autoincrement())
+  uuid            String    @unique @default(uuid())
+  fileName        String
+  description     String?
+  fileURL         String
+  fileSize        Int?
+  fileType        String?
+  storageProvider String? // e.g., 'local', 's3', 'azure', etc.
+  bucket          String? // For cloud storage buckets
+  objectType      String? // e.g., 'User', 'Project', 'Task', etc.
+  objectId        Int? // ID of the associated object
+  metadata        Json? // For any extra info (thumbnails, tags, etc.)
+  uploadedBy      User      @relation("UserUploadedFile", fields: [uploadedById], references: [id])
+  uploadedById    Int
+  uploadedAt      DateTime  @default(now())
+  deletedAt       DateTime? // For soft deletes
+
+  @@index([uploadedById])
+  @@index([objectType, objectId])
+}

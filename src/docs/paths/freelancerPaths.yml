@@ -1,0 +1,1040 @@
+paths:
+  /freelancers/skills:
+    get:
+      summary: Get all skills
+      description: Retrieve a list of all available skills for freelancers.
+      tags:
+        - Skills & Categories
+      responses: 
+        '200':
+          description: A list of skills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Skill'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Add a new skill (Admin/Manager)
+      description: Add a new skill to the system. Requires 'manageSkills' permission.
+      tags:
+        - Skills & Categories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSkillDto'
+            example:
+              name: 'React Development'
+              description: 'Building user interfaces with React.'
+              type: 'PROGRAMMING'
+              programmingType: 'FRONTEND'
+      responses:
+        '201':
+          description: Skill added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/categories:
+    get:
+      summary: Get all categories
+      description: Retrieve a list of all available categories for freelancers.
+      tags:
+        - Skills & Categories
+      responses:
+        '200':
+          description: A list of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Add a new category (Admin/Manager)
+      description: Add a new category to the system. Requires 'manageCategories' permission.
+      tags:
+        - Skills & Categories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryDto'
+            example:
+              name: 'Web Development'
+              description: 'Building websites and web applications.'
+      responses:
+        '201':
+          description: Category added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers:
+    get:
+      summary: Get all freelancers
+      description: Retrieve a list of all freelancers with detailed information.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: [] # Assuming authentication is required
+      responses:
+        '200':
+          description: A list of freelancers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Freelancer' # Use the detailed Freelancer schema
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/card-view:
+    get:
+      summary: Get freelancers for card view
+      description: Retrieve a simplified list of freelancers suitable for card display.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: [] # Assuming authentication is required
+      responses:
+        '200':
+          description: A list of freelancers with limited data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FreelancerCardView' # Use the new card view schema
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/register:
+    post:
+      summary: Register a new freelancer (Admin/Manager)
+      description: Allows an admin or manager to register a new freelancer user and profile. Requires 'manageFreelancers' permission.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFreelancerDto'
+            example:
+              email: 'new.freelancer@example.com'
+              password: 'password123'
+              firstName: 'Alice'
+              lastName: 'Smith'
+              headline: 'Full Stack Developer'
+              bio: 'Experienced in Node.js and React.'
+              skills: [1, 5] # Example Skill IDs
+              categories: [101] # Example Category ID
+              profilePhoto: 'https://example.com/alice.jpg'
+              availability:
+                status: 'AVAILABLE'
+                availableHoursPerWeek: 30
+      responses:
+        '201':
+          description: Freelancer registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User' # Excludes password
+                  freelancer:
+                    $ref: '#/components/schemas/Freelancer'
+        '400':
+          description: Bad Request (Validation Error or Skill/Category not found)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationError'
+                  - $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/profile:
+    post:
+      summary: Register freelancer profile (Freelancer)
+      description: Allows a logged-in user with the FREELANCER role to create their detailed profile.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterProfileDto'
+            example:
+              headline: 'Graphic Designer & Illustrator'
+              bio: 'Creating visually appealing designs.'
+              about: 'Passionate about branding and digital art.'
+              availability:
+                status: 'PARTIALLY_AVAILABLE'
+                availableHoursPerWeek: 20
+                notes: 'Open for small projects.'
+              skills: [3, 8] # Example Skill IDs
+              categories: [201, 205] # Example Category IDs
+              profilePhoto: 'https://example.com/bob.jpg'
+      responses:
+        '201':
+          description: Freelancer profile registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Freelancer'
+        '400':
+          description: Bad Request (Validation Error or Skill/Category not found)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationError'
+                  - $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (Not logged in or not a Freelancer)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (User might already have a profile)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      summary: Update freelancer profile (Freelancer)
+      description: Allows a logged-in freelancer to update their own profile details.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFreelancerDto'
+            example:
+              headline: 'Senior Graphic Designer'
+              bio: 'Updated bio with recent experience.'
+              skills: [3, 8, 12] # Updated Skill IDs
+              availability:
+                status: 'AVAILABLE'
+                availableHoursPerWeek: 40
+      responses:
+        '200':
+          description: Freelancer profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Freelancer'
+        '400':
+          description: Bad Request (Validation Error or Skill/Category not found)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationError'
+                  - $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (Not logged in or not a Freelancer)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Freelancer profile does not exist for this user)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/{id}/status:
+    patch:
+      summary: Update freelancer status (Admin/Manager)
+      description: Update the status (e.g., approve, reject) of a freelancer by their ID. Requires 'manageFreelancers' permission.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the freelancer whose status is to be updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFreelancerStatusDto'
+            example:
+              status: 'APPROVED'
+      responses:
+        '200':
+          description: Freelancer status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Freelancer'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/search:
+    get:
+      summary: Search freelancers
+      description: Search for freelancers using filters like skills, categories, and status.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: [] # Assuming authentication is required
+      parameters:
+        - name: skills
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer # Assuming skill IDs are integers
+          description: Filter freelancers by skill IDs (e.g., skills=1&skills=5).
+          style: form
+          explode: true
+        - name: categories
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer # Assuming category IDs are integers
+          description: Filter freelancers by category IDs (e.g., categories=101&categories=102).
+          style: form
+          explode: true
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, APPROVED, REJECTED, SUSPENDED, TERMINATED]
+          description: Filter freelancers by status.
+        # Add other potential search parameters like name, availability, etc.
+      responses:
+        '200':
+          description: Search results matching the criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Freelancer' # Or FreelancerCardView if preferred for search results
+        '400':
+          description: Bad Request (Invalid query parameters)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/{id}:
+    get:
+      summary: Get freelancer by ID
+      description: Retrieve detailed information about a specific freelancer by their ID.
+      tags:
+        - Freelancers
+      security:
+        - bearerAuth: [] # Assuming authentication is required
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the freelancer to retrieve.
+      responses:
+        '200':
+          description: Freelancer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Freelancer' # Includes relations like user, skills, etc.
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/{freelancerId}/work-history:
+    post:
+      summary: Add work history (Freelancer/Admin)
+      description: Add a new work history entry to a specific freelancer's profile. Requires 'freelancerData' permission (owner or admin).
+      tags:
+        - Work History
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the freelancer to add work history for.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkHistoryDto'
+            example:
+              companyName: 'Creative Agency'
+              position: 'Lead Designer'
+              startDate: '2020-02-15'
+              endDate: '2023-01-31'
+              description: 'Led design projects for various clients.'
+      responses:
+        '201':
+          description: Work history added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkHistory'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+        '404':
+          description: Not Found (Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/work-history/{workHistoryId}: # Note: Path changed to target specific item
+    patch:
+      summary: Update work history item (Freelancer/Admin)
+      description: Update a specific work history entry. Requires 'freelancerData' permission (owner or admin).
+      tags:
+        - Work History
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workHistoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the work history entry to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkHistoryDto'
+            example:
+              position: 'Senior Designer'
+              endDate: '2023-05-31'
+              description: 'Updated responsibilities.'
+      responses:
+        '200':
+          description: Work history updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkHistory'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Work history item or Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete work history item (Freelancer/Admin)
+      description: Delete a specific work history entry. Requires 'freelancerData' permission (owner or admin).
+      tags:
+        - Work History
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workHistoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the work history entry to delete.
+      responses:
+        '204':
+          description: Work history deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Work history item or Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/{freelancerId}/portfolio:
+    post:
+      summary: Add portfolio item (Freelancer/Admin)
+      description: Add a new portfolio item to a specific freelancer's profile. Requires 'freelancerData' permission (owner or admin).
+      tags:
+        - Portfolio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the freelancer to add a portfolio item for.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePortfolioItemDto'
+            example:
+              title: 'E-commerce Website Redesign'
+              description: 'Redesigned the UI/UX for a major online retailer.'
+              imageURL: 'https://example.com/portfolio/ecom-redesign.jpg'
+              projectURL: 'https://example.com/project/ecom-redesign'
+      responses:
+        '201':
+          description: Portfolio item added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioItem'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get portfolio items for a freelancer
+      description: Retrieve all portfolio items for a specific freelancer.
+      tags:
+        - Portfolio
+      security:
+        - bearerAuth: [] # Assuming authentication might be required
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the freelancer whose portfolio items are to be retrieved.
+      responses:
+        '200':
+          description: A list of portfolio items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PortfolioItem'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/portfolio/{portfolioItemId}: # Note: Path changed to target specific item
+    patch:
+      summary: Update portfolio item (Freelancer/Admin)
+      description: Update details of a specific portfolio item. Requires 'freelancerData' permission (owner or admin).
+      tags:
+        - Portfolio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: portfolioItemId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the portfolio item to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePortfolioItemDto'
+            example:
+              title: 'Updated E-commerce Website Redesign'
+              description: 'Added details about conversion rate improvements.'
+              projectURL: 'https://example.com/project/ecom-redesign-v2'
+      responses:
+        '200':
+          description: Portfolio item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortfolioItem'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Portfolio item or Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete portfolio item (Freelancer/Admin)
+      description: Delete a specific portfolio item. Requires 'freelancerData' permission (owner or admin).
+      tags:
+        - Portfolio
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: portfolioItemId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the portfolio item to delete.
+      responses:
+        '204':
+          description: Portfolio item deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Portfolio item or Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/{freelancerId}/reviews:
+    post:
+      summary: Add a review for a freelancer
+      description: Add a new review for a specific freelancer. Requires authentication.
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the freelancer to review.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+                - clientId
+              properties:
+                rating:
+                  type: number
+                  minimum: 0
+                  maximum: 5
+                  description: Rating from 0 to 5 stars
+                reviewText:
+                  type: string
+                  description: Main review text
+                comment:
+                  type: string
+                  description: Additional comments
+                clientId:
+                  type: integer
+                  description: ID of the client submitting the review
+                projectId:
+                  type: integer
+                  description: Optional ID of the related project
+            example:
+              rating: 4.5
+              reviewText: "Excellent work and communication throughout the project."
+              comment: "Would definitely hire again for future projects."
+              clientId: 123
+              projectId: 456
+      responses:
+        '201':
+          description: Review added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Get all reviews for a freelancer
+      description: Retrieve all reviews for a specific freelancer.
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the freelancer whose reviews to retrieve.
+      responses:
+        '200':
+          description: A list of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Freelancer not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /freelancers/reviews/{reviewId}:
+    patch:
+      summary: Update a review
+      description: Update an existing review. Typically limited to the original reviewer or administrators.
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the review to update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rating:
+                  type: number
+                  minimum: 0
+                  maximum: 5
+                  description: Rating from 0 to 5 stars
+                reviewText:
+                  type: string
+                  description: Main review text
+                comment:
+                  type: string
+                  description: Additional comments
+            example:
+              rating: 5
+              reviewText: "Updated: Outstanding work and excellent communication."
+              comment: "Highly recommended for any project."
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad Request (Validation Error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Not authorized to update this review)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Review not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a review
+      description: Delete an existing review. Typically limited to the original reviewer or administrators.
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the review to delete.
+      responses:
+        '200':
+          description: Review deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Review deleted successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden (Not authorized to delete this review)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found (Review not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

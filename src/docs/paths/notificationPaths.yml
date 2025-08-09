@@ -1,0 +1,288 @@
+paths:
+  /notifications:
+    get:
+      summary: Get all notifications
+      description: Get all notifications for the authenticated user with pagination and filtering
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, readAt]
+            default: createdAt
+          description: Field to sort by
+        - in: query
+          name: sortOrder
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+        - in: query
+          name: read
+          schema:
+            type: boolean
+          description: Filter by read status
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: [PROJECT, TASK, PAYMENT, MESSAGE, SYSTEM, SECURITY]
+          description: Filter by notification type
+        - in: query
+          name: entityType
+          schema:
+            type: string
+          description: Filter by entity type
+        - in: query
+          name: entityId
+          schema:
+            type: integer
+            minimum: 1
+          description: Filter by entity ID
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      summary: Delete all read notifications
+      description: Delete all read notifications for the authenticated user
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Read notifications deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAllReadResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /notifications/unread:
+    get:
+      summary: Get unread notifications count
+      description: Get the count and list of unread notifications for the authenticated user
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Unread notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadNotificationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /notifications/{id}:
+    get:
+      summary: Get notification by ID
+      description: Get a specific notification by ID
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    delete:
+      summary: Delete notification
+      description: Delete a specific notification
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteNotificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /notifications/{id}/read:
+    put:
+      summary: Mark notification as read
+      description: Mark a specific notification as read
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification marked as read successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkAsReadResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /notifications/{id}/click:
+    post:
+      summary: Track notification click
+      description: Track when a user clicks on a notification
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification click tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackClickResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /notifications/{id}/delivered:
+    post:
+      summary: Mark notification as delivered
+      description: Mark a notification as delivered
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Notification ID
+      responses:
+        '200':
+          description: Notification marked as delivered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkAsDeliveredResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /notifications/mark-read:
+    put:
+      summary: Mark multiple notifications as read
+      description: Mark multiple notifications as read at once
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkManyAsReadRequest'
+      responses:
+        '200':
+          description: Notifications marked as read successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarkManyAsReadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'

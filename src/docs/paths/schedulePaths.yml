@@ -1,0 +1,212 @@
+paths:
+  /schedules:
+    post:
+      summary: Create a guest schedule
+      tags:
+        - Schedules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScheduleRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    get:
+      summary: Get upcoming schedules
+      tags:
+        - Schedules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+
+  /schedules/{id}:
+    get:
+      summary: Get a guest schedule by ID
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update a guest schedule
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Schedule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduleRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete a guest schedule
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schedules/email/{email}:
+    get:
+      summary: Get guest schedules by email
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+          description: Guest email
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+
+  /schedules/{id}/cancel:
+    post:
+      summary: Cancel a guest schedule
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schedules/{id}/confirm:
+    post:
+      summary: Confirm a guest schedule
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schedules/{id}/complete:
+    post:
+      summary: Mark a guest schedule as complete
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schedules/{id}/reminder:
+    post:
+      summary: Update reminder status for a schedule
+      tags:
+        - Schedules
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Schedule ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'

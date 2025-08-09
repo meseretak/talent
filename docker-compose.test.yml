@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: byfluence_test_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${TEST_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${TEST_DB_NAME:-test_db}
+    ports:
+      - '${TEST_DB_PORT:-5433}:5432'
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${TEST_DB_USER:-postgres} -d ${TEST_DB_NAME:-test_db}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  test-runner:
+    image: node:20-alpine
+    container_name: byfluence_test_runner
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ./node_modules:/app/node_modules
+    env_file:
+      - .env.test
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://${TEST_DB_USER:-postgres}:${TEST_DB_PASSWORD:-postgres}@postgres-test:5432/${TEST_DB_NAME:-test_db}?schema=public
+    command: >
+      sh -c "yarn install --frozen-lockfile &&
+             yarn prisma generate &&
+             yarn prisma migrate deploy &&
+             yarn test"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    networks:
+      - test-network
+
+volumes:
+  postgres-test-data:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge

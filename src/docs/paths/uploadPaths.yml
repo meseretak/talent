@@ -1,0 +1,116 @@
+paths:
+  /upload:
+    post:
+      summary: Upload a file
+      tags:
+        - Upload
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The file to upload
+                description:
+                  type: string
+                  description: Optional file description
+                storageProvider:
+                  type: string
+                  description: Storage provider (e.g., local, s3, azure)
+                bucket:
+                  type: string
+                  description: Cloud storage bucket name
+                objectType:
+                  type: string
+                  description: The type of object this file is associated with (e.g., User, Project)
+                objectId:
+                  type: integer
+                  description: The ID of the associated object
+                metadata:
+                  type: string
+                  description: Additional metadata as a JSON string
+            encoding:
+              file:
+                contentType: application/octet-stream
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: File uploaded successfully
+                  file:
+                    $ref: '#/components/schemas/File'
+        '400':
+          description: Bad request (e.g., no file uploaded, invalid metadata)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (user not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error during upload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    File:
+      type: object
+      properties:
+        id:
+          type: integer
+        uuid:
+          type: string
+        fileName:
+          type: string
+        description:
+          type: string
+        fileURL:
+          type: string
+        fileSize:
+          type: integer
+        fileType:
+          type: string
+        storageProvider:
+          type: string
+        bucket:
+          type: string
+        objectType:
+          type: string
+        objectId:
+          type: integer
+        metadata:
+          type: object
+        uploadedById:
+          type: integer
+        uploadedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

@@ -1,0 +1,80 @@
+name: Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install docker-compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Create .env.test file
+        run: |
+          cat > .env.test << EOL
+          # Environment
+          NODE_ENV=test
+
+          # Database
+          TEST_DB_USER=postgres
+          TEST_DB_PASSWORD=postgres
+          TEST_DB_NAME=test_db
+          TEST_DB_PORT=5433
+          DATABASE_URL=postgresql://postgres:postgres@postgres-test:5432/test_db?schema=public
+
+          # JWT
+          JWT_SECRET=test-jwt-secret-key-for-testing-purposes-only
+          JWT_ACCESS_EXPIRATION_MINUTES=30
+          JWT_REFRESH_EXPIRATION_DAYS=30
+          JWT_RESET_PASSWORD_EXPIRATION_MINUTES=10
+          JWT_VERIFY_EMAIL_EXPIRATION_MINUTES=10
+
+          # Server
+          PORT=9000
+          SESSION_SECRET=test-session-secret-key-for-testing-purposes-only
+
+          # Logging
+          LOG_FOLDER=./logs
+          LOG_LEVEL=error
+
+          # Email testing
+          EMAIL_FROM=test@example.com
+          EMAIL_PROVIDER=test
+          BREVO_API_KEY=test-key
+          BREVO_SENDER_EMAIL=test@example.com
+          BREVO_SENDER_NAME=Test Sender
+
+          # Stripe (test mode)
+          STRIPE_SECRET_KEY=sk_test_example
+          STRIPE_WEBHOOK_SECRET=whsec_test_example
+          STRIPE_CURRENCY=usd
+
+          # File upload
+          UPLOAD_DIR=./uploads/test
+          MAX_FILE_SIZE=5242880
+          EOL
+
+      - name: Run tests with Docker
+        run: yarn test:docker
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 5

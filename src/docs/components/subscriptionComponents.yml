@@ -1,0 +1,285 @@
+components:
+  schemas:
+    # Add Subscription Schema
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        planId:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, CANCELED, EXPIRED, PAUSED, TRIALING]
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        billingCycle:
+          type: string
+          enum: [MONTHLY, ANNUALLY]
+
+    # Add Credit Schema
+    Credit:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [BASE, REFERRAL]
+        expiresAt:
+          type: string
+          format: date-time
+
+    # Add BillingAddress Schema
+    BillingAddress:
+      type: object
+      properties:
+        id:
+          type: integer
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        postalCode:
+          type: string
+        clientId:
+          type: integer
+
+    # Add PaymentTransaction Schema
+    PaymentTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+        paymentMethod:
+          type: string
+        clientId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # Add BillingHistory Schema
+    BillingHistory:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: integer
+        amount:
+          type: number
+        description:
+          type: string
+        date:
+          type: string
+          format: date-time
+        status:
+          type: string
+
+    # Add CreditUsageAnalytics Schema
+    CreditUsageAnalytics:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: integer
+        creditsUsed:
+          type: integer
+        usageDate:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+
+    
+    # Add Discount Schema
+    Discount:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [PERCENTAGE, FIXED, VOLUME]
+        value:
+          type: number
+        maxDiscount:
+          type: number
+        minRequirement:
+          type: object
+        appliesTo:
+          type: string
+          enum: [PLANS, SERVICES, ALL]
+        planIds:
+          type: array
+          items:
+            type: string
+        serviceTypes:
+          type: array
+          items:
+            type: string
+        validFrom:
+          type: string
+          format: date-time
+        validUntil:
+          type: string
+          format: date-time
+        schedule:
+          type: object
+        timezone:
+          type: string
+        maxUses:
+          type: integer
+        userMaxUses:
+          type: integer
+        isActive:
+          type: boolean
+
+    # Add HolidayDiscountRule Schema
+    HolidayDiscountRule:
+      type: object
+      properties:
+        id:
+          type: string
+        discountId:
+          type: string
+        holidayName:
+          type: string
+        date:
+          type: string
+          format: date-time
+        isRecurring:
+          type: boolean
+        multiplier:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    # Add DiscountRedemption Schema
+    DiscountRedemption:
+      type: object
+      properties:
+        id:
+          type: string
+        discountId:
+          type: string
+        subscriptionId:
+          type: string
+        clientId:
+          type: integer
+        appliedTo:
+          type: string
+        appliedAmount:
+          type: number
+        creditValueId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # Add PlanInformation Schema
+    PlanInformation:
+      type: object
+      properties:
+        id:
+          type: string
+        planId:
+          type: string
+        displayName:
+          type: string
+        shortDescription:
+          type: string
+        priceDescription:
+          type: string
+        highlight:
+          type: boolean
+        mostPopular:
+          type: boolean
+        buttonText:
+          type: string
+        order:
+          type: integer
+        monthlyPrice:
+          type: number
+        annualPrice:
+          type: number
+        creditIncluded:
+          type: integer
+        isCustom:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Add PlanFeatureDisplay Schema
+    PlanFeatureDisplay:
+      type: object
+      properties:
+        id:
+          type: string
+        planInfoId:
+          type: string
+        featureText:
+          type: string
+        isAvailable:
+          type: boolean
+        isHighlight:
+          type: boolean
+        tooltip:
+          type: string
+        order:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # Add PlanComparison Schema
+    PlanComparison:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        featuredPlanId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

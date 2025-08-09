@@ -1,0 +1,399 @@
+components:
+  schemas:
+    # Add Project Schema
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            [
+              PLANNING,
+              IN_PROGRESS,
+              REVIEW,
+              COMPLETED,
+              ON_HOLD,
+              CANCELLED,
+              PAUSED,
+              COMPLETED_WITH_ISSUES,
+              ARCHIVED,
+            ]
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        budget:
+          type: number
+        clientId:
+          type: integer
+        managerId:
+          type: integer
+
+    # Add Task Schema
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            [
+              TODO,
+              IN_PROGRESS,
+              SUBMITTED_FOR_REVIEW,
+              CHANGES_REQUESTED,
+              REVISION_IN_PROGRESS,
+              APPROVED,
+              FINAL_REVIEW,
+              COMPLETED,
+              CANCELLED,
+              ON_HOLD,
+            ]
+        priority:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, URGENT]
+        dueDate:
+          type: string
+          format: date-time
+        projectId:
+          type: integer
+        assigneeId:
+          type: integer
+
+    # Add Chat Schema
+    ChatRoom:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        lastMessage:
+          type: string
+        lastMessageAt:
+          type: string
+          format: date-time
+
+    # Add Resource Schema
+    Resource:
+      type: object
+      properties:
+        id:
+          type: integer
+        fileName:
+          type: string
+        fileURL:
+          type: string
+        fileSize:
+          type: integer
+        fileType:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, ARCHIVED]
+        type:
+          type: string
+          enum: [VIDEO, DESIGN, AUDIO, DOCUMENT, CODE, OTHER]
+
+    # Add TimeLog Schema
+    TimeLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        taskId:
+          type: integer
+        userId:
+          type: integer
+        projectId:
+          type: integer
+        freelancerId:
+          type: integer
+
+    # Add JobTimer Schema
+    JobTimer:
+      type: object
+      properties:
+        id:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        taskId:
+          type: integer
+        userId:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, PAUSED, COMPLETED]
+        duration:
+          type: integer
+          description: Duration in seconds
+
+    # Add ProjectActivity Schema
+    ProjectActivity:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [CREATED, UPDATED, DELETED, COMMENT_ADDED, STATUS_CHANGED, ASSIGNED]
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        userId:
+          type: integer
+        projectId:
+          type: integer
+        taskId:
+          type: integer
+
+    # Add BudgetInformation Schema
+    BudgetInformation:
+      type: object
+      properties:
+        id:
+          type: integer
+        budget:
+          type: integer
+        currency:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [BANK_TRANSFER, CREDIT_CARD, PAYPAL, CRYPTO]
+        paymentFrequency:
+          type: string
+          enum: [WEEKLY, BI_WEEKLY, MONTHLY]
+        budgetStatus:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, PAID]
+        budgetDate:
+          type: string
+          format: date-time
+        freelancerBudget:
+          type: integer
+        freelancerBudgetPercentage:
+          type: integer
+        companyBudget:
+          type: integer
+
+    # Add ProjectTeam Schema
+    ProjectTeam:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        freelancers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Freelancer'
+
+    # Add Comment Schema
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        taskId:
+          type: integer
+        authorId:
+          type: integer
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+
+    # Add Document Schema
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        path:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+        uploadedById:
+          type: integer
+
+    # Add DocumentVersion Schema
+    DocumentVersion:
+      type: object
+      properties:
+        id:
+          type: string
+        documentId:
+          type: integer
+        versionNumber:
+          type: integer
+        fileURL:
+          type: string
+        fileSize:
+          type: integer
+        changedById:
+          type: integer
+        changeNotes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # Add Outcome Schema
+    Outcome:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        clientId:
+          type: integer
+        deliverables:
+          type: array
+          items:
+            type: string
+        feedback:
+          type: string
+        rating:
+          type: integer
+        completionDate:
+          type: string
+          format: date-time
+        acceptanceDate:
+          type: string
+          format: date-time
+        revisionRequests:
+          type: array
+          items:
+            type: string
+        finalPaymentStatus:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, PAID]
+        metrics:
+          type: object
+        notes:
+          type: string
+
+        # Add ChatMessage Schema
+        ChatMessage:
+          type: object
+          properties:
+            id:
+              type: integer
+            message:
+              type: string
+            messageType:
+              type: string
+              enum: [text, image, file, voice, video]
+            senderId:
+              type: integer
+            recipientId:
+              type: integer
+            roomId:
+              type: integer
+            sentAt:
+              type: string
+              format: date-time
+            editedAt:
+              type: string
+              format: date-time
+            readAt:
+              type: string
+              format: date-time
+            status:
+              type: string
+              enum: [sent, delivered, read]
+            reactions:
+              type: object
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Document'
+            mediaContent:
+              type: object
+            replyTo:
+              type: object
+            forwardedFrom:
+              type: object
+            mentions:
+              type: array
+              items:
+                type: integer
+            metadata:
+              type: object
+
+    # Add SubTask Schema
+    SubTask:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        completed:
+          type: boolean
+        parentTaskId:
+          type: integer
+
+    # Add Milestone Schema
+    Milestone:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, COMPLETED, ON_HOLD]
+        projectId:
+          type: integer

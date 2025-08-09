@@ -1,0 +1,210 @@
+version: '3.9'
+
+services:
+  node-app:
+    container_name: node-app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: node-app:${BUILD_NUMBER} # Use this to tag the local image
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      loki:
+        condition: service_started
+      prometheus:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:secret@postgres_db:5432/postgres?schema=public
+      - PORT=4000
+      - NODE_ENV=development
+      - LOKI_HOST=http://loki:3100
+    command: >
+      sh -c "
+        npx prisma generate --schema=./prisma/schema &&
+        npx prisma migrate deploy --schema=./prisma/schema &&
+        npx prisma db seed --schema=./prisma/schema &&
+        yarn start
+      "
+    restart: on-failure
+    networks:
+      - prisma-network
+    labels:
+      - 'logging=promtail'
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  postgres_db:
+    image: postgres:14
+    hostname: postgres_db
+    container_name: postgres_db
+    restart: always
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+    ports:
+      - '5432:5432'
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - prisma-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
+      interval: 5s
+      timeout: 2s
+      retries: 20
+
+  prisma-studio:
+    image: node:20-alpine
+    working_dir: /usr/src/node-app
+    volumes:
+      - .:/usr/src/node-app
+    command: npx prisma studio --schema=./prisma/schema --port 5555 --browser none
+    ports:
+      - '5555:5555'
+    environment:
+      - DATABASE_URL=postgresql://postgres:secret@postgres_db:5432/postgres?schema=public
+    networks:
+      - prisma-network
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  # ------------------------------
+  # Monitoring & Observability
+  # ------------------------------
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - '9090:9090'
+    networks:
+      - prisma-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    user: '472'
+    ports:
+      - '3110:3000'
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    networks:
+      - prisma-network
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/nodejs-app.json
+      - GF_SMTP_ENABLED=${SMTP_ENABLED:-false}
+      - GF_SMTP_HOST=${SMTP_HOST:-smtp.example.com:587}
+      - GF_SMTP_USER=${SMTP_USER:-user}
+      - GF_SMTP_PASSWORD=${SMTP_PASSWORD:-password}
+      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM:-grafana@example.com}
+      - GF_SMTP_FROM_NAME=Grafana
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-pyroscope-app,grafana-exploretraces-app,grafana-metricsdrilldown-app
+    depends_on:
+      - prometheus
+      - loki
+
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    ports:
+      - '3100:3100'
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/config.yml
+      - loki-data:/loki
+    networks:
+      - prisma-network
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: promtail
+    volumes:
+      - /var/log:/var/log
+      - /etc/machine-id:/etc/machine-id
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - prisma-network
+    depends_on:
+      - loki
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - '8090:8090'
+    command: --port=8090
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - prisma-network
+    depends_on:
+      - prometheus
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    ports:
+      - '9187:9187'
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:secret@postgres_db:5432/postgres?sslmode=disable
+    networks:
+      - prisma-network
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: jaeger
+    ports:
+      - '16686:16686' # UI
+      - '6831:6831/udp' # Traces (UDP)
+      - '14268:14268' # HTTP collector
+    networks:
+      - prisma-network
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - COLLECTOR_OTLP_ENABLED=true
+
+volumes:
+  dbdata:
+    driver: local
+  grafana-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  loki-data:
+    driver: local
+
+networks:
+  prisma-network:
+    name: prisma-network

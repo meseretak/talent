@@ -1,0 +1,162 @@
+paths:
+  /hire/freelancer:
+    post:
+      summary: Hire a freelancer
+      tags:
+        - Hire
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HireFreelancerDto'
+      responses:
+        '201':
+          description: Freelancer hired successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hire/fire:
+    post:
+      summary: Fire (terminate) a freelancer
+      tags:
+        - Hire
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FireFreelancerDto'
+      responses:
+        '200':
+          description: Freelancer fired successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hire/save:
+    post:
+      summary: Save a freelancer for future hiring
+      tags:
+        - Hire
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HireFreelancerDto'
+      responses:
+        '200':
+          description: Freelancer saved for future hiring
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hire/client/{clientId}/freelancers:
+    get:
+      summary: List all freelancers hired by a client
+      tags:
+        - Hire
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of freelancers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HiredFreelancer'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hire/freelancer/{freelancerId}/clients:
+    get:
+      summary: List all clients who have hired a freelancer
+      tags:
+        - Hire
+      parameters:
+        - name: freelancerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HiringClient'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hire/is-hired:
+    get:
+      summary: Check if a freelancer is currently hired by a client
+      tags:
+        - Hire
+      parameters:
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: freelancerId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Hire status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hired:
+                    type: boolean
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

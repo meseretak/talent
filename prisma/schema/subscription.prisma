@@ -1,0 +1,401 @@
+// * Pricing Module And Subscription Management
+
+model Referral {
+  id                 Int                 @id @default(autoincrement())
+  referringClient    Client              @relation("ReferringClient", fields: [referringClientId], references: [id])
+  referredClient     Client              @relation("ReferredClients", fields: [referredClientId], references: [id])
+  referringClientId  Int
+  referredClientId   Int
+  referredIp         String?
+  referredUserAgent  String?
+  referredLocation   String?
+  referralDate       DateTime            @default(now())
+  status             String // "pending", "accepted", "completed"
+  discountCredits    Int // Amount of discount given to referring client
+  discountApplied    Boolean             @default(false)
+  expiryDate         DateTime // When the referral offer expires
+  notes              String?
+  referralLink       String              @unique // The generated unique referral link
+  couponCode         String // The coupon code for the referral
+  linkClicks         Int                 @default(0) // Track number of clicks
+  signups            Int                 @default(0) // Track successful signups
+  activeUsers        Int                 @default(0) // Track active referred users
+  rewardsEarned      Decimal             @default(0) @db.Decimal(10, 2) // Track total rewards earned
+  lastClickedAt      DateTime? // Track last click timestamp
+  clicks             ReferralClick[] // Relation to track detailed click analytics
+  creditTransactions CreditTransaction[] // Added this relation field
+  ReferralAnalytics  ReferralAnalytics[] // Added this relation field
+
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([referringClientId, referredClientId])
+  @@index([referringClientId])
+  @@index([referredClientId])
+  @@index([referralLink])
+  @@index([couponCode])
+}
+
+model ReferralClick {
+  id         Int      @id @default(autoincrement())
+  referral   Referral @relation(fields: [referralId], references: [id])
+  referralId Int
+  clickedAt  DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+  location   String?
+  converted  Boolean  @default(false) // Whether this click led to a signup
+
+  @@index([referralId])
+  @@index([clickedAt])
+}
+
+model ReferralAnalytics {
+  id               String   @id @default(uuid())
+  referral         Referral @relation(fields: [referralId], references: [id])
+  referralId       Int
+  conversionRate   Float?
+  averageSpend     Float?
+  retentionRate    Float?
+  campaignSource   String?
+  deviceBreakdown  Json?
+  locationData     Json?
+  timeToConversion Int? // In days
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([referralId])
+}
+
+model PlanStatistics {
+  id            Int    @id @default(autoincrement())
+  totalProjects Int
+  totalClients  Int
+  totalEarnings Int
+  Plan          Plan[]
+}
+
+model CreditTransaction {
+  id             String          @id @default(cuid())
+  client         Client          @relation(fields: [clientId], references: [id])
+  clientId       Int // Changed from String to Int
+  type           TransactionType
+  amount         Int
+  remaining      Int
+  expirationDate DateTime?
+  description    String?
+  subscription   Subscription?   @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String? // Changed from String to Int
+  referral       Referral?       @relation(fields: [referralId], references: [id])
+  referralId     Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model CreditUsageAnalytics {
+  id              String   @id @default(uuid())
+  clientId        Int
+  client          Client   @relation(fields: [clientId], references: [id])
+  period          String // e.g., "2023-05" for monthly analytics
+  totalUsed       Int
+  byServiceType   Json // Breakdown by service type
+  peakUsageDays   Json? // Days with highest usage
+  unusualActivity Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@unique([clientId, period])
+  @@index([clientId])
+}
+
+model CustomPlanRequest {
+  id                String   @id @default(cuid())
+  clients           Client   @relation(fields: [clientId], references: [id])
+  clientId          Int
+  requestedCredits  Int
+  requestedBrands   Int
+  durationMonths    Int
+  status            String   @default("PENDING")
+  stripePaymentLink String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Subscription Core
+
+model SubscriptionHistory {
+  id             String             @id @default(uuid())
+  subscription   Subscription       @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+  planId         String
+  priceId        String?
+  status         SubscriptionStatus
+  startDate      DateTime
+  endDate        DateTime
+  reason         String?
+  createdAt      DateTime           @default(now())
+
+  @@index([subscriptionId])
+}
+
+model Subscription {
+  id                  String               @id @default(uuid())
+  client              Client               @relation(fields: [clientId], references: [id])
+  clientId            Int                  @unique
+  plan                Plan                 @relation(fields: [planId], references: [id])
+  planId              String
+  price               PlanPrice?           @relation(fields: [priceId], references: [id])
+  priceId             String?
+  customCredits       Int?
+  status              SubscriptionStatus   @default(ACTIVE)
+  invoiceId           Int?
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  baseCreditsUsed     Int                  @default(0)
+  referralCreditsUsed Int                  @default(0)
+  brandsUsed          Int                  @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  invoice             Invoice[]
+  paymentTransactions PaymentTransaction[]
+  billingHistory      BillingHistory[]
+
+  // Relationships
+  creditConsumptions  CreditConsumption[]
+  referralCredits     ReferralCredit[]
+  brandConsumptions   BrandConsumption[]
+  CreditTransaction   CreditTransaction[]
+  DiscountRedemption  DiscountRedemption[]
+  subscriptionHistory SubscriptionHistory[] // Added this relation field
+}
+
+// Plan Structure
+model Plan {
+  id             String           @id @default(uuid())
+  name           String           @unique
+  description    String?
+  isCustom       Boolean          @default(false)
+  features       PlanFeature[]
+  prices         PlanPrice[]
+  subscriptions  Subscription[]
+  information    PlanInformation?
+  PlanStatistics PlanStatistics   @relation(fields: [planStatisticsId], references: [id])
+
+  planStatisticsId Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// Plan Features
+model PlanFeature {
+  id               String   @id @default(uuid())
+  plan             Plan     @relation(fields: [planId], references: [id])
+  planId           String
+  feature          Feature  @relation(fields: [featureId], references: [id])
+  featureId        String
+  value            String
+  expirationPolicy String   @default("END_OF_BILLING_CYCLE")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([planId, featureId])
+}
+
+// Feature Catalog
+model Feature {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  description String
+  key         String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  PlanFeature PlanFeature[]
+}
+
+// Pricing Options
+model PlanPrice {
+  id           String         @id @default(uuid())
+  plan         Plan           @relation(fields: [planId], references: [id])
+  planId       String
+  credits      Int?
+  amount       Decimal
+  billingCycle BillingCycle
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Subscription Subscription[]
+
+  @@unique([planId, credits, billingCycle])
+}
+
+// Service Pricing
+model CreditValue {
+  id                 String               @id @default(uuid())
+  serviceType        String               @unique
+  name               String
+  description        String?
+  baseUnit           String               @default("MINUTE")
+  creditsPerUnit     Int
+  minUnits           Int                  @default(1)
+  maxUnits           Int?
+  tieredPricing      Json?
+  isActive           Boolean              @default(true)
+  category           String
+  consumptions       CreditConsumption[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  DiscountRedemption DiscountRedemption[]
+
+  @@index([serviceType])
+  @@index([category])
+  @@index([baseUnit])
+}
+
+// Credit Usage Tracking
+model CreditConsumption {
+  id               String          @id @default(uuid())
+  subscription     Subscription    @relation(fields: [subscriptionId], references: [id])
+  subscriptionId   String
+  service          CreditValue?    @relation(fields: [serviceId], references: [id])
+  serviceId        String?
+  units            Float
+  unitType         String
+  creditRate       Int
+  totalCredits     Int
+  discountApplied  Int             @default(0)
+  creditType       CreditType      @default(BASE)
+  referralCredit   ReferralCredit? @relation("CreditConsumptionToReferralCredit")
+  referralCreditId String?
+  description      String?
+  createdAt        DateTime        @default(now())
+
+  @@index([serviceId])
+}
+
+// Referral System
+model ReferralCredit {
+  id                String               @id @default(uuid())
+  subscription      Subscription         @relation(fields: [subscriptionId], references: [id])
+  subscriptionId    String
+  creditAmount      Int
+  referralDate      DateTime             @default(now())
+  expiresAt         DateTime
+  referredUserEmail String?
+  status            ReferralCreditStatus @default(ACTIVE)
+  consumedIn        CreditConsumption?   @relation("CreditConsumptionToReferralCredit", fields: [consumedInId], references: [id])
+  consumedInId      String?              @unique // Added unique constraint
+}
+
+// Brand Management
+model BrandConsumption {
+  id             String       @id @default(uuid())
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+  brandId        String
+  action         String
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+}
+
+// Discount System
+model Discount {
+  id             String                @id @default(uuid())
+  code           String?               @unique
+  name           String
+  description    String?
+  type           DiscountType          @default(PERCENTAGE)
+  value          Decimal
+  maxDiscount    Decimal?
+  minRequirement Json?
+  appliesTo      DiscountTarget        @default(PLANS)
+  planIds        String[]              @default([])
+  serviceTypes   String[]              @default([])
+  validFrom      DateTime?
+  validUntil     DateTime?
+  schedule       Json?
+  timezone       String?               @default("UTC")
+  maxUses        Int?
+  userMaxUses    Int?                  @default(1)
+  isActive       Boolean               @default(true)
+  redemptions    DiscountRedemption[]
+  holidayRules   HolidayDiscountRule[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([code])
+  @@index([validUntil])
+}
+
+model HolidayDiscountRule {
+  id          String   @id @default(uuid())
+  discount    Discount @relation(fields: [discountId], references: [id])
+  discountId  String
+  holidayName String
+  date        DateTime
+  isRecurring Boolean  @default(true)
+  multiplier  Decimal  @default(1.5)
+  createdAt   DateTime @default(now())
+}
+
+model DiscountRedemption {
+  id             String       @id @default(uuid())
+  discount       Discount     @relation(fields: [discountId], references: [id])
+  discountId     String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+  client         Client       @relation(fields: [clientId], references: [id])
+  clientId       Int
+  appliedTo      String
+  appliedAmount  Decimal
+  creditValue    CreditValue? @relation(fields: [creditValueId], references: [id])
+  creditValueId  String?
+  createdAt      DateTime     @default(now())
+
+  @@index([discountId])
+  @@index([clientId])
+}
+
+// Pricing Display
+model PlanInformation {
+  id               String               @id @default(uuid())
+  plan             Plan                 @relation(fields: [planId], references: [id])
+  planId           String               @unique
+  displayName      String
+  shortDescription String
+  priceDescription String
+  highlight        Boolean              @default(false)
+  mostPopular      Boolean              @default(false)
+  buttonText       String               @default("Get Started")
+  order            Int                  @default(0)
+  monthlyPrice     Decimal?
+  annualPrice      Decimal?
+  creditIncluded   Int?
+  isCustom         Boolean              @default(false)
+  features         PlanFeatureDisplay[]
+  comparisons      PlanComparison[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+}
+
+model PlanFeatureDisplay {
+  id              String          @id @default(uuid())
+  planInformation PlanInformation @relation(fields: [planInfoId], references: [id])
+  planInfoId      String
+  featureText     String
+  isAvailable     Boolean         @default(true)
+  isHighlight     Boolean         @default(false)
+  tooltip         String?
+  order           Int             @default(0)
+  createdAt       DateTime        @default(now())
+}
+
+// Plan Comparison
+model PlanComparison {
+  id             String            @id @default(uuid())
+  title          String
+  description    String?
+  plans          PlanInformation[]
+  featuredPlanId String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}

@@ -1,0 +1,88 @@
+// * Model Communication Module
+model ChatMessage {
+  id            Int        @id @default(autoincrement())
+  message       String
+  messageType   String // "text", "image", "file", "voice", "video"
+  sender        User       @relation("UserToMessageSent", fields: [senderId], references: [id])
+  senderId      Int
+  recipient     User?      @relation("UserToMessageReceived", fields: [recipientId], references: [id])
+  recipientId   Int?
+  chatRoom      ChatRoom   @relation(fields: [roomId], references: [id])
+  roomId        Int
+  sentAt        DateTime   @default(now())
+  editedAt      DateTime?
+  readAt        DateTime?
+  status        String // "sent", "delivered", "read"
+  reactions     Json? // Array of {userId: number, emoji: string}
+  attachments   Document[] @relation("MessageAttachments")
+  attachmentId  Int?
+  mediaContent  Json? // Stores file metadata
+  replyTo       Json? // Stores reply metadata
+  forwardedFrom Json? // Stores forwarding metadata
+  mentions      Int[] // Array of mentioned user IDs
+  metadata      Json? // Stores message metadata
+
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([roomId])
+}
+
+model ChatRoom {
+  id                Int           @id @default(autoincrement())
+  name              String
+  description       String?
+  participants      User[]        @relation("UserToChatRoomParticipant")
+  messages          ChatMessage[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime?     @updatedAt
+  lastMessageAt     DateTime?
+  isGroupChat       Boolean       @default(false)
+  groupChatId       Int?
+  chatType          String // "with_freelancer", "with_client", "with_project_manager"
+  admin             User?         @relation("UserToChatRoomAdmin", fields: [adminId], references: [id])
+  adminId           Int?
+  moderators        User[]        @relation("UserToChatRoomManager")
+  mutedParticipants Int[] // Array of muted user IDs
+  isTyping          Json? // Array of {userId: number, isTyping: boolean}
+  pinnedMessages    Int[] // Array of pinned message IDs
+  settings          Json // Room settings
+  metadata          Json? // Room metadata
+  Project           Project?      @relation(fields: [projectId], references: [id])
+  projectId         Int?
+
+  @@index([adminId])
+  @@index([projectId])
+}
+
+model Notification {
+  id          Int              @id @default(autoincrement())
+  type        NotificationType
+  content     String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  readAt      DateTime?
+  recipient   User             @relation("UserToNotificationReceived", fields: [recipientId], references: [id])
+  recipientId Int
+  sender      User?            @relation("UserToNotificationSent", fields: [senderId], references: [id])
+  senderId    Int?
+  user        User             @relation("UserToNotification", fields: [userId], references: [id])
+  userId      Int
+  entityType  String // "project", "task", "payment", etc.
+  entityId    Int // ID of the related entity
+
+  @@index([recipientId])
+  @@index([senderId])
+  @@index([userId])
+}
+
+model NotificationTemplate {
+  id           String           @id @default(uuid())
+  name         String           @unique
+  type         NotificationType
+  subject      String
+  bodyTemplate String           @db.Text
+  variables    String[] // List of variables that can be used in the template
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}

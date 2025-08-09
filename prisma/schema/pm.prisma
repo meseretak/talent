@@ -1,0 +1,10 @@
+// * Model Project Manager Module
+model ProjectManager {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @unique
+  user            User      @relation("UserToProjectManager", fields: [userId], references: [id])
+  tasks           Task[]    @relation("TaskToProjectManager")
+  managedProjects Project[] @relation("ProjectToProjectManager")
+
+  @@index([userId])
+}

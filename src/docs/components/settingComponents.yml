@@ -1,0 +1,409 @@
+components:
+  schemas:
+  # Add Security Definitions
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+
+  # Add Common Response Schemas
+  responses:
+    Success:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+              message:
+                type: string
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string
+
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+        expires:
+          type: string
+          format: date-time
+      example:
+        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWJhYzUzNDk1NGI1NDEzOTgwNmMxMTIiLCJpYXQiOjE1ODkyOTg0ODQsImV4cCI6MTU4OTMwMDI4NH0.m1U63blB0MLej_WfB7yC2FTMnCziif9X8yzwDEfJXAg
+        expires: 2020-05-12T16:18:04.793Z
+
+    AuthTokens:
+      type: object
+      properties:
+        access:
+          $ref: '#/components/schemas/Token'
+        refresh:
+          $ref: '#/components/schemas/Token'
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: number
+        message:
+          type: string
+      example:
+        code: 404
+        message: 'Not found'
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        role:
+          type: string
+          enum: [USER, ADMIN, PROJECT_MANAGER, FREELANCER, CLIENT]
+      example:
+        email: user@example.com
+        password: password1
+        firstName: John
+        lastName: Doe
+        role: USER
+
+    FreelancerRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+        - headline
+        - bio
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        headline:
+          type: string
+        bio:
+          type: string
+        about:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            type: string
+        availability:
+          type: object
+          properties:
+            status:
+              type: string
+            availableHoursPerWeek:
+              type: number
+            notes:
+              type: string
+      example:
+        email: freelancer@example.com
+        password: password1
+        firstName: Jane
+        lastName: Smith
+        headline: Senior Web Developer
+        bio: Experienced web developer with 8+ years in React and Node.js
+        skills: ['1', '2', '3']
+        categories: ['1', '2']
+        availability:
+          status: AVAILABLE
+          availableHoursPerWeek: 30
+          notes: Available for immediate start
+
+    FreelancerProfileRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - headline
+        - bio
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+        headline:
+          type: string
+        bio:
+          type: string
+        about:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            type: string
+        availability:
+          type: object
+          properties:
+            status:
+              type: string
+            availableHoursPerWeek:
+              type: number
+            notes:
+              type: string
+      example:
+        firstName: Jane
+        lastName: Smith
+        headline: Senior Web Developer
+        bio: Experienced web developer with 8+ years in React and Node.js
+        skills: ['1', '2', '3']
+        categories: ['1', '2']
+        availability:
+          status: AVAILABLE
+          availableHoursPerWeek: 30
+          notes: Available for immediate start
+
+    FreelancerStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, SUSPENDED, TERMINATED]
+      example:
+        status: APPROVED
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+      example:
+        email: user@example.com
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          format: password
+      example:
+        password: newpassword1
+
+    FreelancerSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Freelancer'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: number
+            limit:
+              type: number
+            offset:
+              type: number
+            hasMore:
+              type: boolean
+      example:
+        results:
+          - id: '1'
+            userId: '101'
+            firstName: 'John'
+            lastName: 'Doe'
+            headline: 'Web Developer'
+            bio: 'Experienced developer'
+            status: 'APPROVED'
+            availability:
+              status: 'AVAILABLE'
+              availableHoursPerWeek: 30
+        pagination:
+          total: 50
+          limit: 10
+          offset: 0
+          hasMore: true
+
+    DuplicateEmail:
+      description: Email already taken
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 400
+            message: Email already taken
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 401
+            message: Please authenticate
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 403
+            message: Forbidden
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 404
+            message: Not found
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 400
+            message: Invalid request parameters
+
+    OTPGenerateRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address to send OTP to
+      example:
+        email: user@example.com
+
+    OTPGenerateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A message indicating the OTP was sent
+        expiresIn:
+          type: number
+          description: Time in milliseconds until the OTP expires
+      example:
+        message: 'OTP sent successfully'
+        expiresIn: 600000
+
+    OTPVerifyRequest:
+      type: object
+      required:
+        - email
+        - otp
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address the OTP was sent to
+        otp:
+          type: string
+          description: The 6-digit OTP code
+          minLength: 6
+          maxLength: 6
+      example:
+        email: user@example.com
+        otp: '123456'
+
+    OTPVerifyResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: A message indicating the OTP verification status
+      example:
+        message: 'OTP verified successfully'
+
+    securitySchemes:
+      bearerAuth:
+        type: http
+        scheme: bearer
+        bearerFormat: JWT
+      cookieAuth:
+        type: apiKey
+        in: cookie
+        name: connect.sid
+
+    # Add Session Schema
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: integer
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time

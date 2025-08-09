@@ -1,0 +1,177 @@
+components:
+  schemas:
+    # Add LibraryCategory Schema
+    LibraryCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Add LibraryResource Schema
+    LibraryResource:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        keyPoints:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, ARCHIVED]
+        difficulty:
+          type: string
+          enum: [BEGINNER, INTERMEDIATE, ADVANCED]
+        duration:
+          type: integer
+        views:
+          type: integer
+        allowComments:
+          type: boolean
+        thumbnailUrl:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        authorId:
+          type: integer
+        categoryId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Add LibrarySection Schema
+    LibrarySection:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        order:
+          type: integer
+        imageUrl:
+          type: string
+        resourceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Add LibraryAttachment Schema
+    LibraryAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        type:
+          type: string
+          enum: [DOCUMENT, IMAGE, VIDEO, AUDIO]
+        size:
+          type: integer
+        resourceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Add LibraryComment Schema
+    LibraryComment:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        userId:
+          type: integer
+        resourceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Add LibraryProgress Schema
+    LibraryProgress:
+      type: object
+      properties:
+        id:
+          type: string
+        percentage:
+          type: integer
+        completed:
+          type: boolean
+        lastAccessed:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        userId:
+          type: integer
+        resourceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Add LibraryCertificate Schema
+    LibraryCertificate:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        imageUrl:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        userId:
+          type: integer
+        resourceId:
+          type: string

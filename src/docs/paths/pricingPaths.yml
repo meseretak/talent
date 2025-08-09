@@ -1,0 +1,142 @@
+paths:
+  /pricing/plan-information:
+    get:
+      summary: Get all plan information
+      description: Returns information for all plans configured in the system
+      tags:
+        - Pricing
+      responses:
+        "200":
+          description: Plan information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanInformation'
+        "500":
+          $ref: '#/components/responses/ServerError'
+    
+    post:
+      summary: Create plan information
+      description: Creates new plan information for displaying on pricing pages
+      tags:
+        - Pricing
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlanInformationDto'
+      responses:
+        "201":
+          description: Plan information created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanInformation'
+        "400":
+          description: Missing required fields
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /pricing/plan-information/{planId}:
+    get:
+      summary: Get plan information by plan ID
+      description: Returns information for a specific plan
+      tags:
+        - Pricing
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the plan to retrieve information for
+      responses:
+        "200":
+          description: Plan information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanInformation'
+        "404":
+          description: Plan information not found
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /pricing/comparisons:
+    get:
+      summary: Get all plan comparisons
+      description: Returns all plan comparison tables configured in the system
+      tags:
+        - Pricing
+      responses:
+        "200":
+          description: Comparisons retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanComparison'
+        "500":
+          $ref: '#/components/responses/ServerError'
+    
+    post:
+      summary: Create plan comparison
+      description: Creates a new plan comparison table
+      tags:
+        - Pricing
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateComparisonDto'
+      responses:
+        "201":
+          description: Comparison created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanComparison'
+        "400":
+          description: Missing required fields or invalid request
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /pricing/comparisons/{comparisonId}:
+    get:
+      summary: Get comparison table by ID
+      description: Returns a specific plan comparison table
+      tags:
+        - Pricing
+      parameters:
+        - name: comparisonId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the comparison to retrieve
+      responses:
+        "200":
+          description: Comparison table retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanComparison'
+        "400":
+          description: Invalid comparison ID
+        "404":
+          description: Comparison not found
+        "500":
+          $ref: '#/components/responses/ServerError'

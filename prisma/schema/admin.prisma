@@ -1,0 +1,5 @@
+// * Model Admin Information Module
+
+model Admin {
+  id Int @id @default(autoincrement())
+}

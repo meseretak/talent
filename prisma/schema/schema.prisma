@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../../src/generated/prisma" // `output` is required
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+
+  //  // Add this line for local development
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// System Configuration
+model SystemSettings {
+  id                      String   @id @default(uuid())
+  creditPerReferral       Int      @default(100)
+  referralExpirationDays  Int      @default(60)
+  minPurchaseForCredit    Boolean  @default(false)
+  referralBonusOnPurchase Int      @default(50)
+  createdAt               DateTime @default(now())
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isEnabled   Boolean  @default(false)
+  percentage  Int      @default(100) // Percentage of users who get the feature
+  rules       Json? // Complex rules for enabling the feature
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

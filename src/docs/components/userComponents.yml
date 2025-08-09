@@ -1,0 +1,605 @@
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        firstName:
+          type: string
+        middleName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, PROJECT_MANAGER, FREELANCER, CLIENT, SUPPORT, INVESTOR]
+        isEmailVerified:
+          type: boolean
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, BANNED]
+        provider:
+          type: string
+        providerId:
+          type: string
+        avatar:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Freelancer:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        headline:
+          type: string
+        bio:
+          type: string
+        about:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        featuredFreelancer:
+          type: boolean
+        rank:
+          type: boolean
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, SUSPENDED, TERMINATED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        profilePhoto:
+          type: string
+
+    Skill:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [VIDEO, PROGRAMMING, DESIGN, WRITING, MARKETING]
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+
+    FreelancerCardView:
+      type: object
+      description: Simplified freelancer data for card display
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        headline:
+          type: string
+        profilePhoto:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/Skill'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, SUSPENDED, TERMINATED]
+        user: # Include basic user info
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            avatar:
+              type: string
+
+    WorkHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+        freelancerId:
+          type: integer
+        companyName:
+          type: string
+        position:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PortfolioItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        freelancerId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        imageURL:
+          type: string
+          nullable: true
+        projectURL:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Availability:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [AVAILABLE, PARTIALLY_AVAILABLE, NOT_AVAILABLE]
+        availableHoursPerWeek:
+          type: integer
+          nullable: true
+        unavailableUntil:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    CreateFreelancerDto:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        firstName:
+          type: string
+        lastName:
+          type: string
+        middleName:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [FREELANCER] # Specific for this context
+          default: FREELANCER
+        provider:
+          type: string
+          enum: [GOOGLE, FACEBOOK, GITHUB, EMAIL] # Example providers
+          nullable: true
+        providerId:
+          type: string
+          nullable: true
+        isEmailVerified:
+          type: boolean
+          default: false
+        headline:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        about:
+          type: string
+          nullable: true
+        availability:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [AVAILABLE, PARTIALLY_AVAILABLE, NOT_AVAILABLE]
+              default: AVAILABLE
+            availableHoursPerWeek:
+              type: integer
+              default: 40
+            unavailableUntil:
+              type: string
+              format: date
+              nullable: true
+            notes:
+              type: string
+              nullable: true
+          nullable: true
+        skills:
+          type: array
+          items:
+            type: integer
+          description: Array of Skill IDs
+          nullable: true
+        categories:
+          type: array
+          items:
+            type: integer
+          description: Array of Category IDs
+          nullable: true
+        profilePhoto:
+          type: string
+          format: url
+          nullable: true
+        workHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateWorkHistoryDto' # Reference the DTO
+          nullable: true
+        certifications:
+          type: array
+          items:
+            type: object # Define inline or reference a CertificationDto
+            properties:
+              name:
+                type: string
+              issuingOrganization:
+                type: string
+              issueDate:
+                type: string
+                format: date
+              expirationDate:
+                type: string
+                format: date
+                nullable: true
+              credentialId:
+                type: string
+                nullable: true
+          nullable: true
+        portfolio:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePortfolioItemDto' # Reference the DTO
+          nullable: true
+
+    RegisterProfileDto:
+      type: object
+      properties:
+        headline:
+          type: string
+        bio:
+          type: string
+        about:
+          type: string
+        availability:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [AVAILABLE, PARTIALLY_AVAILABLE, NOT_AVAILABLE]
+            availableHoursPerWeek:
+              type: integer
+            unavailableUntil:
+              type: string
+              format: date
+              nullable: true
+            notes:
+              type: string
+              nullable: true
+        skills:
+          type: array
+          items:
+            type: integer
+          description: Array of Skill IDs
+        categories:
+          type: array
+          items:
+            type: integer
+          description: Array of Category IDs
+        profilePhoto:
+          type: string
+          format: url
+          nullable: true
+
+    UpdateFreelancerDto:
+      type: object
+      properties:
+        headline:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        about:
+          type: string
+          nullable: true
+        availability:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [AVAILABLE, PARTIALLY_AVAILABLE, NOT_AVAILABLE]
+            availableHoursPerWeek:
+              type: integer
+            unavailableUntil:
+              type: string
+              format: date
+              nullable: true
+            notes:
+              type: string
+              nullable: true
+          nullable: true
+        skills:
+          type: array
+          items:
+            type: integer
+          description: Array of Skill IDs
+          nullable: true
+        categories:
+          type: array
+          items:
+            type: integer
+          description: Array of Category IDs
+          nullable: true
+        profilePhoto:
+          type: string
+          format: url
+          nullable: true
+        # Note: workHistory, certifications, portfolio updates are handled via separate endpoints
+
+    UpdateFreelancerStatusDto:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, SUSPENDED, TERMINATED]
+
+    CreateSkillDto:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [VIDEO, PROGRAMMING, DESIGN, WRITING, MARKETING]
+        videoType:
+          type: string
+          enum: [EDITING, ANIMATION, VFX] # Example subtypes
+          nullable: true
+        programmingType:
+          type: string
+          enum: [FRONTEND, BACKEND, MOBILE, DATABASE] # Example subtypes
+          nullable: true
+        designType:
+          type: string
+          enum: [GRAPHIC, UIUX, ILLUSTRATION] # Example subtypes
+          nullable: true
+        writingType:
+          type: string
+          enum: [COPYWRITING, TECHNICAL, CREATIVE] # Example subtypes
+          nullable: true
+        marketingType:
+          type: string
+          enum: [SEO, SEM, SOCIAL_MEDIA, CONTENT] # Example subtypes
+          nullable: true
+
+    CreateCategoryDto:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    CreateWorkHistoryDto:
+      type: object
+      required:
+        - companyName
+        - position
+        - startDate
+      properties:
+        companyName:
+          type: string
+        position:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    UpdateWorkHistoryDto:
+      type: object
+      properties:
+        companyName:
+          type: string
+          nullable: true
+        position:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+          nullable: true
+        endDate:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    CreatePortfolioItemDto:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        imageURL:
+          type: string
+          format: url
+          nullable: true
+        projectURL:
+          type: string
+          format: url
+          nullable: true
+
+    UpdatePortfolioItemDto:
+      type: object
+      properties:
+        title:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        imageURL:
+          type: string
+          format: url
+          nullable: true
+        projectURL:
+          type: string
+          format: url
+          nullable: true
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        action:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        projectId:
+          type: integer
+        details:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: number
+        message:
+          type: string
+      example:
+        code: 404
+        message: 'Not found'
+
+    Success:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+              message:
+                type: string
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                    message:
+                      type: string

@@ -1,0 +1,234 @@
+[
+  {
+    "id": "resource:read:project_member",
+    "description": "Allow project members to read resources associated with their projects",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["resource"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "anyOf",
+      "conditions": [
+        {
+          "type": "attribute",
+          "attribute": "resource.project.teamMembers",
+          "operator": "contains",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.project.freelancerIds",
+          "operator": "contains",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.project.managerId",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.project.clientId",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        }
+      ]
+    }
+  },
+  {
+    "id": "resource:read:admin",
+    "description": "Allow admins to read all resources",
+    "effect": "allow",
+    "priority": 90,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["resource"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "resource:read:uploader",
+    "description": "Allow resource uploaders to read their uploaded resources",
+    "effect": "allow",
+    "priority": 80,
+    "target": {
+      "resources": ["resource"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.uploadedById",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "resource:read:task_assignee",
+    "description": "Allow task assignees to read resources associated with their tasks",
+    "effect": "allow",
+    "priority": 70,
+    "target": {
+      "resources": ["resource"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.task.assigneeId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "resource:write:uploader",
+    "description": "Allow resource uploaders to update their uploaded resources",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["resource"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "allOf",
+      "conditions": [
+        {
+          "type": "attribute",
+          "attribute": "resource.uploadedById",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.status",
+          "operator": "equals",
+          "value": "ACTIVE"
+        }
+      ]
+    }
+  },
+  {
+    "id": "resource:write:project_manager",
+    "description": "Allow project managers to update resources in their projects",
+    "effect": "allow",
+    "priority": 90,
+    "target": {
+      "roles": ["PROJECT_MANAGER"],
+      "resources": ["resource"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.project.managerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "resource:write:admin",
+    "description": "Allow admins to update all resources",
+    "effect": "allow",
+    "priority": 80,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["resource"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "resource:create:project_member",
+    "description": "Allow project members to create resources for their projects",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["resource"],
+      "actions": ["create"]
+    },
+    "conditions": {
+      "type": "anyOf",
+      "conditions": [
+        {
+          "type": "attribute",
+          "attribute": "resource.project.teamMembers",
+          "operator": "contains",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.project.freelancerIds",
+          "operator": "contains",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.project.managerId",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        }
+      ]
+    }
+  },
+  {
+    "id": "resource:delete:admin",
+    "description": "Allow only admins to delete resources",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["resource"],
+      "actions": ["delete"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "resource:archive:uploader",
+    "description": "Allow resource uploaders to archive their uploaded resources",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["resource"],
+      "actions": ["archive"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.uploadedById",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "resource:archive:project_manager",
+    "description": "Allow project managers to archive resources in their projects",
+    "effect": "allow",
+    "priority": 90,
+    "target": {
+      "roles": ["PROJECT_MANAGER"],
+      "resources": ["resource"],
+      "actions": ["archive"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.project.managerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  }
+]

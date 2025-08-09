@@ -1,0 +1,241 @@
+components:
+  schemas:
+    # Notification Core Schema
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the notification
+        type:
+          type: string
+          enum: [PROJECT, TASK, PAYMENT, MESSAGE, SYSTEM, SECURITY]
+          description: Type of notification
+        content:
+          type: string
+          description: Notification content/message
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the notification was read
+        recipientId:
+          type: integer
+          description: ID of the notification recipient
+        senderId:
+          type: integer
+          nullable: true
+          description: ID of the notification sender
+        userId:
+          type: integer
+          description: ID of the user associated with the notification
+        entityType:
+          type: string
+          description: Type of entity this notification is about
+        entityId:
+          type: integer
+          description: ID of the entity this notification is about
+        createdAt:
+          type: string
+          format: date-time
+          description: When the notification was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the notification was last updated
+        sender:
+          $ref: '#/components/schemas/User'
+        recipient:
+          $ref: '#/components/schemas/User'
+
+    # Notification List Response
+    NotificationListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Notifications retrieved successfully'
+        data:
+          type: object
+          properties:
+            notifications:
+              type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+            pagination:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  description: Total number of notifications
+                page:
+                  type: integer
+                  description: Current page number
+                limit:
+                  type: integer
+                  description: Number of items per page
+                totalPages:
+                  type: integer
+                  description: Total number of pages
+                hasMore:
+                  type: boolean
+                  description: Whether there are more pages
+
+    # Notification Response
+    NotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Notification retrieved successfully'
+        data:
+          $ref: '#/components/schemas/Notification'
+
+    # Unread Notifications Response
+    UnreadNotificationsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Unread notifications retrieved successfully'
+        data:
+          type: object
+          properties:
+            count:
+              type: integer
+              description: Number of unread notifications
+            notifications:
+              type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+
+    # Mark as Read Response
+    MarkAsReadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Notification marked as read successfully'
+        data:
+          $ref: '#/components/schemas/Notification'
+
+    # Mark Many as Read Response
+    MarkManyAsReadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: '5 notifications marked as read successfully'
+        data:
+          type: object
+          properties:
+            count:
+              type: integer
+              description: Number of notifications marked as read
+
+    # Delete Response
+    DeleteNotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Notification deleted successfully'
+        data:
+          type: null
+
+    # Delete All Read Response
+    DeleteAllReadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: '10 read notifications deleted successfully'
+        data:
+          type: object
+          properties:
+            count:
+              type: integer
+              description: Number of notifications deleted
+
+    # Track Click Response
+    TrackClickResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Notification click tracked successfully'
+        data:
+          type: null
+
+    # Mark as Delivered Response
+    MarkAsDeliveredResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: 'Notification marked as delivered successfully'
+        data:
+          type: null
+
+    # Request Schemas
+    MarkManyAsReadRequest:
+      type: object
+      required:
+        - notificationIds
+      properties:
+        notificationIds:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          minItems: 1
+          description: Array of notification IDs to mark as read
+
+    # User Schema (for notifications)
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+        firstName:
+          type: string
+          description: User's first name
+        lastName:
+          type: string
+          description: User's last name
+        email:
+          type: string
+          format: email
+          description: User's email address
+        avatar:
+          type: string
+          nullable: true
+          description: User's avatar URL

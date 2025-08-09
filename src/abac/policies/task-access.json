@@ -1,0 +1,213 @@
+[
+  {
+    "id": "task:read:assigned",
+    "description": "Allow users to read tasks assigned to them",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["task"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.assigneeId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "task:read:creator",
+    "description": "Allow task creators to read their created tasks",
+    "effect": "allow",
+    "priority": 90,
+    "target": {
+      "resources": ["task"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.createdById",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "task:read:project_manager",
+    "description": "Allow project managers to read tasks in their projects",
+    "effect": "allow",
+    "priority": 80,
+    "target": {
+      "roles": ["PROJECT_MANAGER"],
+      "resources": ["task"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.project.managerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "task:read:admin",
+    "description": "Allow admins to read all tasks",
+    "effect": "allow",
+    "priority": 70,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["task"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "task:write:assigned",
+    "description": "Allow assigned users to update their tasks",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["task"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "allOf",
+      "conditions": [
+        {
+          "type": "attribute",
+          "attribute": "resource.assigneeId",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.status",
+          "operator": "in",
+          "value": ["PENDING", "IN_PROGRESS", "REVIEW"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "task:write:project_manager",
+    "description": "Allow project managers to update tasks in their projects",
+    "effect": "allow",
+    "priority": 90,
+    "target": {
+      "roles": ["PROJECT_MANAGER"],
+      "resources": ["task"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.project.managerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "task:write:admin",
+    "description": "Allow admins to update all tasks",
+    "effect": "allow",
+    "priority": 80,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["task"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "task:create:authorized",
+    "description": "Allow authorized users to create tasks",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN", "PROJECT_MANAGER"],
+      "resources": ["task"],
+      "actions": ["create"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN", "PROJECT_MANAGER"]
+    }
+  },
+  {
+    "id": "task:delete:admin",
+    "description": "Allow only admins to delete tasks",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["task"],
+      "actions": ["delete"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "task:comment:participants",
+    "description": "Allow task participants to add comments",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["task"],
+      "actions": ["comment"]
+    },
+    "conditions": {
+      "type": "anyOf",
+      "conditions": [
+        {
+          "type": "attribute",
+          "attribute": "resource.assigneeId",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.createdById",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.project.managerId",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        }
+      ]
+    }
+  },
+  {
+    "id": "task:assign:project_manager",
+    "description": "Allow project managers to assign tasks",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "roles": ["PROJECT_MANAGER"],
+      "resources": ["task"],
+      "actions": ["assign"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.project.managerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  }
+]

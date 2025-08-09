@@ -1,0 +1,544 @@
+components:
+  schemas:
+    # Chat Room Schemas
+    ChatRoom:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the chat room
+        name:
+          type: string
+          description: Name of the chat room
+        description:
+          type: string
+          description: Description of the chat room
+        type:
+          type: string
+          enum: [direct, group]
+          description: Type of chat room
+        isArchived:
+          type: boolean
+          description: Whether the chat room is archived
+        isMuted:
+          type: boolean
+          description: Whether the chat room is muted
+        createdAt:
+          type: string
+          format: date-time
+          description: When the chat room was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the chat room was last updated
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatParticipant'
+        moderators:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatModerator'
+        settings:
+          $ref: '#/components/schemas/ChatRoomSettings'
+
+    ChatParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the participant
+        userId:
+          type: string
+          description: User ID of the participant
+        role:
+          type: string
+          enum: [member, moderator, admin]
+          description: Role of the participant in the chat room
+        joinedAt:
+          type: string
+          format: date-time
+          description: When the participant joined the chat room
+        user:
+          $ref: '#/components/schemas/User'
+
+    ChatModerator:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the moderator
+        userId:
+          type: string
+          description: User ID of the moderator
+        addedAt:
+          type: string
+          format: date-time
+          description: When the user was added as moderator
+        user:
+          $ref: '#/components/schemas/User'
+
+    ChatRoomSettings:
+      type: object
+      properties:
+        allowFileUploads:
+          type: boolean
+          description: Whether file uploads are allowed
+        maxFileSize:
+          type: integer
+          description: Maximum file size in bytes
+        allowedFileTypes:
+          type: array
+          items:
+            type: string
+          description: Allowed file types
+        messageRetentionDays:
+          type: integer
+          description: Number of days to retain messages
+
+    # Message Schemas
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the message
+        content:
+          type: string
+          description: Message content
+        roomId:
+          type: string
+          description: ID of the chat room
+        senderId:
+          type: string
+          description: ID of the message sender
+        sender:
+          $ref: '#/components/schemas/User'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageAttachment'
+        reactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageReaction'
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        replyTo:
+          $ref: '#/components/schemas/Message'
+        status:
+          type: string
+          enum: [sent, delivered, read]
+          description: Message status
+        createdAt:
+          type: string
+          format: date-time
+          description: When the message was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the message was last updated
+
+    MessageAttachment:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the attachment
+        filename:
+          type: string
+          description: Original filename
+        fileSize:
+          type: integer
+          description: File size in bytes
+        mimeType:
+          type: string
+          description: MIME type of the file
+        url:
+          type: string
+          format: uri
+          description: URL to download the file
+        uploadedAt:
+          type: string
+          format: date-time
+          description: When the file was uploaded
+
+    MessageReaction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the reaction
+        emoji:
+          type: string
+          description: Emoji reaction
+        userId:
+          type: string
+          description: ID of the user who reacted
+        user:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+          description: When the reaction was added
+
+    # Request Schemas
+    CreateChatRoomRequest:
+      type: object
+      required:
+        - name
+        - participants
+      properties:
+        name:
+          type: string
+          description: Name of the chat room
+        description:
+          type: string
+          description: Description of the chat room
+        type:
+          type: string
+          enum: [direct, group]
+          default: group
+          description: Type of chat room
+        participants:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs to include in the chat room
+
+    UpdateChatRoomRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: New name for the chat room
+        description:
+          type: string
+          description: New description for the chat room
+        settings:
+          $ref: '#/components/schemas/ChatRoomSettings'
+
+    SendMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: Message content
+        attachments:
+          type: array
+          items:
+            type: string
+          description: Array of attachment IDs
+        replyToId:
+          type: string
+          description: ID of the message to reply to
+
+    EditMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: New message content
+
+    AddParticipantsRequest:
+      type: object
+      required:
+        - participants
+      properties:
+        participants:
+          type: array
+          items:
+            type: string
+          description: Array of user IDs to add to the chat room
+
+    AddModeratorRequest:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          description: User ID to add as moderator
+
+    UpdateRoomSettingsRequest:
+      type: object
+      properties:
+        allowFileUploads:
+          type: boolean
+          description: Whether file uploads are allowed
+        maxFileSize:
+          type: integer
+          description: Maximum file size in bytes
+        allowedFileTypes:
+          type: array
+          items:
+            type: string
+          description: Allowed file types
+        messageRetentionDays:
+          type: integer
+          description: Number of days to retain messages
+
+    AddMessageReactionRequest:
+      type: object
+      required:
+        - emoji
+      properties:
+        emoji:
+          type: string
+          description: Emoji reaction to add
+
+    ReplyToMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: Reply message content
+        attachments:
+          type: array
+          items:
+            type: string
+          description: Array of attachment IDs
+
+    ForwardMessageRequest:
+      type: object
+      required:
+        - roomIds
+      properties:
+        roomIds:
+          type: array
+          items:
+            type: string
+          description: Array of room IDs to forward the message to
+
+    UpdateMessageStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [sent, delivered, read]
+          description: New message status
+
+    UploadAttachmentRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: File to upload
+
+    ReportMessageRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: Reason for reporting the message
+        details:
+          type: string
+          description: Additional details about the report
+
+    MarkMessagesAsReadRequest:
+      type: object
+      required:
+        - messageIds
+      properties:
+        messageIds:
+          type: array
+          items:
+            type: string
+          description: Array of message IDs to mark as read
+
+    # Notification Schemas
+    ChatNotification:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the notification
+        type:
+          type: string
+          enum: [message, mention, reaction, reply]
+          description: Type of notification
+        title:
+          type: string
+          description: Notification title
+        message:
+          type: string
+          description: Notification message
+        roomId:
+          type: string
+          description: ID of the related chat room
+        messageId:
+          type: string
+          description: ID of the related message
+        isRead:
+          type: boolean
+          description: Whether the notification has been read
+        createdAt:
+          type: string
+          format: date-time
+          description: When the notification was created
+
+    # Analytics Schemas
+    ChatAnalytics:
+      type: object
+      properties:
+        totalRooms:
+          type: integer
+          description: Total number of chat rooms
+        totalMessages:
+          type: integer
+          description: Total number of messages
+        activeUsers:
+          type: integer
+          description: Number of active users
+        messagesPerDay:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer
+        topRooms:
+          type: array
+          items:
+            type: object
+            properties:
+              roomId:
+                type: string
+              roomName:
+                type: string
+              messageCount:
+                type: integer
+
+    # Search Schemas
+    SearchChatRoomsRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Search query
+        type:
+          type: string
+          enum: [direct, group]
+          description: Filter by room type
+        limit:
+          type: integer
+          default: 20
+          description: Maximum number of results
+        offset:
+          type: integer
+          default: 0
+          description: Number of results to skip
+
+    SearchMessagesRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: Search query
+        roomId:
+          type: string
+          description: Filter by room ID
+        senderId:
+          type: string
+          description: Filter by sender ID
+        dateFrom:
+          type: string
+          format: date-time
+          description: Filter messages from this date
+        dateTo:
+          type: string
+          format: date-time
+          description: Filter messages to this date
+        limit:
+          type: integer
+          default: 50
+          description: Maximum number of results
+        offset:
+          type: integer
+          default: 0
+          description: Number of results to skip
+
+    # Response Schemas
+    ChatRoomListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatRoom'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+            hasMore:
+              type: boolean
+
+    MessageListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+            hasMore:
+              type: boolean
+
+    NotificationListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatNotification'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+            hasMore:
+              type: boolean

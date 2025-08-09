@@ -1,0 +1,158 @@
+paths:
+  /plans:
+    get:
+      summary: Get all available plans
+      description: Returns a list of all available subscription plans with their details
+      tags:
+        - Plans
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of plans retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanResponseDto'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /plans/pricing-page:
+    get:
+      summary: Get pricing page data
+      description: Returns formatted data for displaying the pricing page including plans and comparisons
+      tags:
+        - Plans
+      responses:
+        "200":
+          description: Pricing page data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingPageResponseDto'
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /plans/{planId}:
+    get:
+      summary: Get plan by ID
+      description: Returns details for a specific plan
+      tags:
+        - Plans
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the plan to retrieve
+      responses:
+        "200":
+          description: Plan retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        "400":
+          description: Invalid plan ID
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Plan not found
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /plans/{planId}/features:
+    get:
+      summary: Get plan features
+      description: Returns features for a specific plan
+      tags:
+        - Plans
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the plan to retrieve features for
+      responses:
+        "200":
+          description: Plan features retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    feature:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                    value:
+                      type: string
+        "400":
+          description: Invalid plan ID
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Plan not found
+        "500":
+          $ref: '#/components/responses/ServerError'
+
+  /plans/{planId}/prices:
+    get:
+      summary: Get plan prices
+      description: Returns pricing options for a specific plan
+      tags:
+        - Plans
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the plan to retrieve prices for
+      responses:
+        "200":
+          description: Plan prices retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    credits:
+                      type: integer
+                      nullable: true
+                    amount:
+                      type: number
+                      format: decimal
+                    billingCycle:
+                      type: string
+                    isActive:
+                      type: boolean
+        "400":
+          description: Invalid plan ID
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Plan not found
+        "500":
+          $ref: '#/components/responses/ServerError'

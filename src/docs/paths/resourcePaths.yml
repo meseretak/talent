@@ -1,0 +1,299 @@
+paths:
+  /resources:
+    post:
+      summary: Create a new resource
+      description: Users can create and upload new resources.
+      tags: [Resources]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - type
+                - url
+                - projectId
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                type:
+                  type: string
+                  enum: [VIDEO, DESIGN, AUDIO, DOCUMENT, CODE, OTHER]
+                url:
+                  type: string
+                projectId:
+                  type: integer
+                taskId:
+                  type: integer
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /resources/{id}:
+    get:
+      summary: Get a resource by ID
+      description: Get detailed resource information.
+      tags: [Resources]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Resource ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /resources/{id}/status:
+    patch:
+      summary: Update resource status
+      description: Update the status of a resource.
+      tags: [Resources]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Resource ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [ACTIVE, ARCHIVED, DELETED]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /resources/project/{projectId}:
+    get:
+      summary: Get project resources
+      description: Get all resources for a specific project.
+      tags: [Resources]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema:
+            type: integer
+          description: Project ID
+        - in: query
+          name: type
+          schema:
+            type: string
+          description: Comma-separated resource types
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ACTIVE, ARCHIVED, DELETED]
+          description: Resource status
+        - in: query
+          name: uploadedById
+          schema:
+            type: integer
+          description: Uploader ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /resources/task/{taskId}:
+    get:
+      summary: Get task resources
+      description: Get all resources for a specific task.
+      tags: [Resources]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: integer
+          description: Task ID
+        - in: query
+          name: type
+          schema:
+            type: string
+          description: Comma-separated resource types
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ACTIVE, ARCHIVED, DELETED]
+          description: Resource status
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /resources/{id}/attach:
+    post:
+      summary: Attach resource to task
+      description: Attach an existing resource to a task.
+      tags: [Resources]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Resource ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - taskId
+              properties:
+                taskId:
+                  type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /resources/search:
+    get:
+      summary: Search resources
+      description: Search and filter resources based on various criteria.
+      tags: [Resources]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: projectId
+          schema:
+            type: integer
+          description: Project ID
+        - in: query
+          name: type
+          schema:
+            type: string
+          description: Comma-separated resource types
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ACTIVE, ARCHIVED, DELETED]
+          description: Resource status
+        - in: query
+          name: uploadedById
+          schema:
+            type: integer
+          description: Uploader ID
+        - in: query
+          name: query
+          schema:
+            type: string
+          description: Search query
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /resources/{id}/download:
+    get:
+      summary: Get resource download URL
+      description: Get a temporary download URL for a resource.
+      tags: [Resources]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Resource ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  downloadUrl:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'

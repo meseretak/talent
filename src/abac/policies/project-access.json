@@ -1,0 +1,186 @@
+[
+  {
+    "id": "project:read:owner",
+    "description": "Allow project owners to read their projects",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["project"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.ownerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "project:read:admin",
+    "description": "Allow admins to read all projects",
+    "effect": "allow",
+    "priority": 90,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["project"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "allOf",
+      "conditions": [
+        {
+          "type": "attribute",
+          "attribute": "user.roles",
+          "operator": "in",
+          "value": ["ADMIN", "SUPER_ADMIN"]
+        }
+      ]
+    }
+  },
+  {
+    "id": "project:read:project_manager",
+    "description": "Allow project managers to read their assigned projects",
+    "effect": "allow",
+    "priority": 80,
+    "target": {
+      "roles": ["PROJECT_MANAGER"],
+      "resources": ["project"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "anyOf",
+      "conditions": [
+        {
+          "type": "attribute",
+          "attribute": "resource.managerId",
+          "operator": "equals",
+          "value": "{{user.id}}"
+        },
+        {
+          "type": "attribute",
+          "attribute": "resource.teamMembers",
+          "operator": "contains",
+          "value": "{{user.id}}"
+        }
+      ]
+    }
+  },
+  {
+    "id": "project:read:freelancer",
+    "description": "Allow freelancers to read projects they are assigned to",
+    "effect": "allow",
+    "priority": 70,
+    "target": {
+      "roles": ["FREELANCER"],
+      "resources": ["project"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.freelancerIds",
+      "operator": "contains",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "project:read:client",
+    "description": "Allow clients to read their own projects",
+    "effect": "allow",
+    "priority": 70,
+    "target": {
+      "roles": ["CLIENT"],
+      "resources": ["project"],
+      "actions": ["read"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.clientId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "project:write:owner",
+    "description": "Allow project owners to update their projects",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "resources": ["project"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.ownerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "project:write:admin",
+    "description": "Allow admins to update all projects",
+    "effect": "allow",
+    "priority": 90,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["project"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "project:write:project_manager",
+    "description": "Allow project managers to update their assigned projects",
+    "effect": "allow",
+    "priority": 80,
+    "target": {
+      "roles": ["PROJECT_MANAGER"],
+      "resources": ["project"],
+      "actions": ["write", "update"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "resource.managerId",
+      "operator": "equals",
+      "value": "{{user.id}}"
+    }
+  },
+  {
+    "id": "project:delete:admin",
+    "description": "Allow only admins to delete projects",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "resources": ["project"],
+      "actions": ["delete"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN"]
+    }
+  },
+  {
+    "id": "project:create:authorized",
+    "description": "Allow authorized users to create projects",
+    "effect": "allow",
+    "priority": 100,
+    "target": {
+      "roles": ["ADMIN", "SUPER_ADMIN", "PROJECT_MANAGER", "CLIENT"],
+      "resources": ["project"],
+      "actions": ["create"]
+    },
+    "conditions": {
+      "type": "attribute",
+      "attribute": "user.roles",
+      "operator": "in",
+      "value": ["ADMIN", "SUPER_ADMIN", "PROJECT_MANAGER", "CLIENT"]
+    }
+  }
+]

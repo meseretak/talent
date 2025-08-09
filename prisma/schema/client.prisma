@@ -1,0 +1,71 @@
+// * Model Client Information
+
+model Client {
+  id                      Int                     @id @default(autoincrement())
+  user                    User                    @relation(fields: [userId], references: [id])
+  userId                  Int                     @unique
+  projects                Project[]               @relation("ClientToProject")
+  companyName             String?
+  companyWebsite          String?
+  billingAddress          Address?                 @relation("ClientBillingAddress", fields: [billingAddressId], references: [id])
+  billingAddressId        Int?
+  contactPerson           ContactPerson?          @relation(fields: [contactPersonId], references: [id])
+  contactPersonId         Int?
+  subscription            Subscription?
+  referralCode            String                  @unique
+  contracts               Contract[]
+  reviews                 Review[]
+  clientType              ClientType
+  statisticsInformation   StatisticsInformation   @relation(fields: [statisticsInformationId], references: [id])
+  statisticsInformationId Int
+  resources               Resource[]
+  projectRequests         ProjectRequest[]
+  referredBy              Referral[]              @relation("ReferredClients")
+  referrals               Referral[]              @relation("ReferringClient")
+  creditTransactions      CreditTransaction[]
+  customPlanRequests      CustomPlanRequest[]
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  DiscountRedemption      DiscountRedemption[]
+  billingAddresses        BillingAddress[]
+  paymentTransactions     PaymentTransaction[]
+  billingHistory          BillingHistory[]
+  defaultPaymentMethod    String?
+  taxExempt               Boolean                 @default(false)
+  taxId                   String?
+  CreditUsageAnalytics    CreditUsageAnalytics[]
+  hiredFreelancers        ClientHiredFreelancer[] // Added relation field
+  stripeCustomerId        String?                 @unique // Added for Stripe integration
+  videoTaskRequests       VideoTaskRequest[]
+
+  @@index([billingAddressId])
+  @@index([contactPersonId])
+  @@index([statisticsInformationId])
+}
+
+model ContactPerson {
+  id          Int      @id @default(autoincrement())
+  fullName    String
+  email       String
+  phoneNumber String?
+  position    String?
+  Client      Client[]
+}
+
+model Contract {
+  id                 Int      @id @default(autoincrement())
+  client             Client   @relation(fields: [clientId], references: [id])
+  clientId           Int
+  project            Project  @relation(fields: [projectId], references: [id])
+  projectId          Int
+  startDate          DateTime
+  endDate            DateTime
+  termsAndConditions String
+  signedAt           DateTime
+  signedBy           User     @relation("ContractSignedBy", fields: [signedById], references: [id])
+  signedById         Int
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([signedById])
+}

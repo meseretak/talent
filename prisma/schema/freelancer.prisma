@@ -1,0 +1,188 @@
+//* model Freelancer Information
+model Freelancer {
+  id                       Int                     @id @default(autoincrement())
+  user                     User                    @relation("UserToFreelancer", fields: [userId], references: [id])
+  userId                   Int                     @unique
+  headline                 String
+  bio                      String
+  about                    String
+  skills                   Skill[]                 @relation("FreelancerSkills")
+  categories               Category[]              @relation("FreelancerCategories")
+  featuredFreelancer       Boolean                 @default(false)
+  rank                     Boolean                 @default(false)
+  attachments              ProjectDocument[]
+  certifications           Certification[]
+  workHistory              WorkHistory[]
+  availability             Availability            @relation(fields: [availabilityId], references: [id])
+  portfolio                PortfolioItem[]
+  paymentInformation       PaymentInformation[]
+  projects                 Project[]               @relation("FreelancerToProject")
+  statisticsInformation    StatisticsInformation   @relation(fields: [statisticsInformationId], references: [id])
+  terminationInformation   TerminationInformation? @relation(fields: [terminationInformationId], references: [id])
+  reviews                  Review[]
+  status                   FreelancerStatus        @default(PENDING)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  availabilityId           Int
+  statisticsInformationId  Int
+  terminationInformationId Int?
+  tasks                    Task[]                  @relation("TaskToFreelancer")
+  timeLogs                 TimeLog[]               @relation("FreelancerToTimeLog")
+  projectTeams             ProjectTeam[]           @relation("ProjectTeamToFreelancer")
+  profilePhoto             String?
+  bannerPhoto              String?
+  hiredByClients           ClientHiredFreelancer[] // Added relation field
+  blockedProjects          Project[]               @relation("BlockedTalentsOnProject")
+}
+
+model Skill {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  description     String?
+  type            SkillType
+  videoType       VideoType?
+  programmingType ProgrammingType?
+  designType      DesignType?
+  writingType     WritingType?
+  marketingType   MarketingType?
+  freelancers     Freelancer[]     @relation("FreelancerSkills")
+}
+
+model Category {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  description String?
+  freelancers Freelancer[] @relation("FreelancerCategories")
+}
+
+model Certification {
+  id                  Int         @id @default(autoincrement())
+  name                String
+  issuingOrganization String
+  issueDate           DateTime
+  expirationDate      DateTime?
+  credentialId        String?
+  Freelancer          Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId        Int?
+}
+
+model WorkHistory {
+  id           Int         @id @default(autoincrement())
+  companyName  String
+  position     String
+  startDate    DateTime
+  endDate      DateTime?
+  description  String?
+  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+}
+
+model Availability {
+  id                    Int                @id @default(autoincrement())
+  status                AvailabilityStatus
+  availableHoursPerWeek Int?
+  unavailableUntil      DateTime?
+  notes                 String?
+  Freelancer            Freelancer[]
+}
+
+model TerminationInformation {
+  id               Int             @id @default(autoincrement())
+  terminatedAt     DateTime?
+  terminatedReason String?
+  isTerminated     Boolean
+  terminationType  TerminationType
+  terminatedBy     User            @relation("UserToTermination", fields: [userId], references: [id])
+  freelancers      Freelancer[]
+  userId           Int
+  projects         Project[]
+
+  @@index([userId])
+}
+
+model PortfolioItem {
+  id           Int         @id @default(autoincrement())
+  title        String
+  description  String?
+  imageURL     String?
+  projectURL   String?
+  Freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+}
+
+model PaymentInformation {
+  id                Int                  @id @default(autoincrement())
+  bankAccountNumber String
+  bankAccountName   String
+  bankName          String
+  currency          String
+  bankAccountType   BankAccountType
+  paymentMethod     PaymentMethodType
+  paymentFrequency  PaymentFrequencyType
+  paymentAmount     Int
+  paymentDate       DateTime
+  taxId             String?
+  taxCountry        String?
+  taxState          String?
+  taxAddress        String?
+  taxPercentage     Int?
+  Freelancer        Freelancer?          @relation(fields: [freelancerId], references: [id])
+  freelancerId      Int?
+  taxInformationId  Int?
+  Invoice           Invoice?             @relation(fields: [invoiceId], references: [id])
+  invoiceId         Int?
+}
+
+model StatisticsInformation {
+  id                 Int          @id @default(autoincrement())
+  totalEarnings      Int
+  totalProjects      Int
+  totalTasks         Int
+  totalReviews       Int
+  totalRating        Int
+  totalClients       Int
+  totalJobsCompleted Int
+  totalJobsOngoing   Int
+  totalJobsPending   Int
+  totalJobsCancelled Int
+  totalJobsOnHold    Int
+  totalStorageUsed   Int
+  Freelancer         Freelancer[]
+  Client             Client[]
+}
+
+model ClientHiredFreelancer {
+  client            Client                 @relation(fields: [clientId], references: [id])
+  clientId          Int
+  freelancer        Freelancer             @relation(fields: [freelancerId], references: [id])
+  freelancerId      Int
+  hiredAt           DateTime               @default(now())
+  status            ClientFreelancerStatus @default(ACTIVE)
+  terminatedAt      DateTime?
+  terminationReason String?
+
+  @@id([clientId, freelancerId])
+  @@index([freelancerId])
+}
+
+model Review {
+  id           Int         @id @default(autoincrement())
+  rating       Float       @default(0)
+  reviewText   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  projectId    Int?
+  reviewer     User        @relation("UserToReview", fields: [reviewerId], references: [id])
+  reviewerId   Int
+  comment      String? // Optional client feedback
+  freelancer   Freelancer? @relation(fields: [freelancerId], references: [id])
+  freelancerId Int?
+  client       Client      @relation(fields: [clientId], references: [id])
+  clientId     Int
+  project      Project?    @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([reviewerId])
+  @@index([freelancerId])
+  @@index([clientId])
+}

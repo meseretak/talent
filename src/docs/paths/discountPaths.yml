@@ -1,0 +1,160 @@
+paths:
+  /discounts:
+    post:
+      summary: Create discount
+      description: Create a new discount
+      tags:
+        - Discounts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - discountType
+                - value
+              properties:
+                code:
+                  type: string
+                  description: Discount code
+                discountType:
+                  type: string
+                  enum: [percentage, fixed]
+                  description: Type of discount
+                value:
+                  type: number
+                  description: Discount value
+                maxUses:
+                  type: integer
+                  description: Maximum number of uses
+                expiresAt:
+                  type: string
+                  format: date-time
+                  description: Expiration date
+      responses:
+        '201':
+          description: Discount created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Discount created successfully'
+                  discountId:
+                    type: integer
+                    description: ID of the created discount
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /apply-discount:
+    post:
+      summary: Apply discount
+      description: Apply a discount to a purchase
+      tags:
+        - Discounts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - amount
+              properties:
+                code:
+                  type: string
+                  description: Discount code to apply
+                amount:
+                  type: number
+                  description: Original amount
+      responses:
+        '200':
+          description: Discount applied successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Discount applied successfully'
+                  discountedAmount:
+                    type: number
+                    description: Amount after discount
+                  savings:
+                    type: number
+                    description: Amount saved
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /users/{userId}/discounts/{targetType}:
+    get:
+      summary: Get eligible discounts
+      description: Get eligible discounts for a user and target type
+      tags:
+        - Discounts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: User ID
+        - in: path
+          name: targetType
+          required: true
+          schema:
+            type: string
+          description: Target type for discounts
+      responses:
+        '200':
+          description: Eligible discounts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    code:
+                      type: string
+                    discountType:
+                      type: string
+                    value:
+                      type: number
+                    maxUses:
+                      type: integer
+                    expiresAt:
+                      type: string
+                      format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'

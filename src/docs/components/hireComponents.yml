@@ -1,0 +1,88 @@
+components:
+  schemas:
+    HireFreelancerDto:
+      type: object
+      required:
+        - clientId
+        - freelancerId
+      properties:
+        clientId:
+          type: integer
+          example: 1
+        freelancerId:
+          type: integer
+          example: 2
+
+    FireFreelancerDto:
+      type: object
+      required:
+        - clientId
+        - freelancerId
+      properties:
+        clientId:
+          type: integer
+          example: 1
+        freelancerId:
+          type: integer
+          example: 2
+        reason:
+          type: string
+          example: 'Project completed'
+
+    HiredFreelancer:
+      type: object
+      properties:
+        id:
+          type: integer
+        freelancer:
+          $ref: '#/components/schemas/Freelancer'
+        hiredAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [ACTIVE, PAST, SAVED]
+
+    HiringClient:
+      type: object
+      properties:
+        id:
+          type: integer
+        client:
+          $ref: '#/components/schemas/Client'
+        hiredAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [ACTIVE, PAST, SAVED]
+
+    Freelancer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'Freelancer hired successfully.'
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: 'An error occurred.'

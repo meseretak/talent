@@ -1,0 +1,213 @@
+model LibraryResource {
+  id            String             @id @default(cuid())
+  title         String
+  description   String             @db.Text
+  content       String             @db.Text
+  keyPoints     String?            @db.Text
+  status        LibResourceStatus  @default(DRAFT)
+  difficulty    LibDifficultyLevel @default(INTERMEDIATE)
+  duration      Int? // Duration in minutes
+  views         Int                @default(0)
+  allowComments Boolean            @default(true)
+  thumbnailUrl  String?
+  publishedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relations
+  author       User                      @relation("ResourceAuthor", fields: [authorId], references: [id])
+  authorId     Int
+  category     LibraryCategory           @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  sections     LibrarySection[]
+  attachments  LibraryAttachment[]
+  comments     LibraryComment[]
+  progress     LibraryProgress[]
+  favorites    LibraryFavorite[]
+  pins         LibraryPin[]
+  relatedTo    LibraryResourceRelation[] @relation("RelatedFrom")
+  relatedFrom  LibraryResourceRelation[] @relation("RelatedTo")
+  certificates LibraryCertificate[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+}
+
+model LibrarySection {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  order     Int
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@index([resourceId, order])
+}
+
+model LibraryAttachment {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  url         String
+  type        LibAttachmentType
+  size        Int? // Size in bytes
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@index([resourceId, type])
+}
+
+model LibraryResourceRelation {
+  id          String          @id @default(cuid())
+  resource    LibraryResource @relation("RelatedFrom", fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId  String
+  relatedTo   LibraryResource @relation("RelatedTo", fields: [relatedToId], references: [id], onDelete: Cascade)
+  relatedToId String
+  createdAt   DateTime        @default(now())
+
+  @@unique([resourceId, relatedToId])
+  @@index([resourceId])
+  @@index([relatedToId])
+}
+
+model LibraryComment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user       User              @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+  replies    LibraryReply[]
+  reactions  LibraryReaction[]
+
+  @@index([resourceId, createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+model LibraryReply {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User              @relation(fields: [userId], references: [id])
+  userId    Int
+  comment   LibraryComment    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId String
+  reactions LibraryReaction[]
+
+  @@index([commentId, createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+model LibraryReaction {
+  id        String          @id @default(cuid())
+  type      LibReactionType
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  // Relations
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  comment   LibraryComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId String?
+  reply     LibraryReply?   @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  replyId   String?
+
+  @@unique([userId, commentId, type])
+  @@unique([userId, replyId, type])
+}
+
+model LibraryProgress {
+  id           String    @id @default(cuid())
+  percentage   Int       @default(0)
+  completed    Boolean   @default(false)
+  lastAccessed DateTime  @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, completed])
+  @@index([resourceId, completed])
+}
+
+model LibraryFavorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model LibraryPin {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model LibraryCertificate {
+  id       String   @id @default(cuid())
+  title    String
+  imageUrl String?
+  issuedAt DateTime @default(now())
+
+  // Relations
+  user       User            @relation(fields: [userId], references: [id])
+  userId     Int
+  resource   LibraryResource @relation(fields: [resourceId], references: [id])
+  resourceId String
+
+  @@unique([userId, resourceId])
+  @@index([userId, issuedAt(sort: Desc)])
+}
+
+model LibraryCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  color       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  resources LibraryResource[]
+
+  @@index([isActive])
+}

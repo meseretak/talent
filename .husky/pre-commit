@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/common.sh"
+
+
+
+yarn lint-staged || {
+  echo "ESLint check failed. Please address the linting issues listed above. Make the necessary corrections, add the changes, and attempt the commit again."
+  exit 1
+}

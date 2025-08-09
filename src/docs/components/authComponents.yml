@@ -1,0 +1,280 @@
+components:
+  schemas:
+    # Auth Request Schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: Password123!
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        middleName:
+          type: string
+          example: Robert
+        role:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, PROJECT_MANAGER, FREELANCER, CLIENT]
+          example: CLIENT
+
+    FreelancerRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          example: freelancer@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: Password123!
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Smith
+        middleName:
+          type: string
+          example: Marie
+        bio:
+          type: string
+          example: Experienced web developer with 5+ years of experience
+        skills:
+          type: array
+          items:
+            type: string
+          example: ['JavaScript', 'React', 'Node.js']
+        skillIds:
+          type: array
+          items:
+            type: integer
+          example: [1, 2, 3]
+        categoryIds:
+          type: array
+          items:
+            type: integer
+          example: [1, 2]
+        availableHoursPerWeek:
+          type: integer
+          example: 30
+        availabilityNotes:
+          type: string
+          example: Available weekdays 9am-5pm EST
+        headline:
+          type: string
+          example: Full Stack Web Developer
+        workHistory:
+          type: array
+          items:
+            type: object
+            properties:
+              companyName:
+                type: string
+                example: Tech Solutions Inc.
+              position:
+                type: string
+                example: Senior Developer
+              startDate:
+                type: string
+                format: date
+                example: '2020-01-01'
+              endDate:
+                type: string
+                format: date
+                example: '2023-01-01'
+              description:
+                type: string
+                example: Led a team of developers on various client projects.
+        certifications:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: AWS Certified Developer
+              issuingOrganization:
+                type: string
+                example: Amazon Web Services
+              issueDate:
+                type: string
+                format: date
+                example: '2022-05-15'
+              expirationDate:
+                type: string
+                format: date
+                example: '2025-05-15'
+              credentialId:
+                type: string
+                example: AWS-12345-CD
+        portfolio:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                example: E-commerce Platform
+              description:
+                type: string
+                example: Built a full-stack e-commerce platform with React and Node.js
+              imageURL:
+                type: string
+                format: uri
+                example: https://example.com/portfolio/ecommerce.jpg
+              projectURL:
+                type: string
+                format: uri
+                example: https://github.com/username/ecommerce-project
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: Password123!
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: NewPassword123!
+
+    SendVerificationEmailRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+
+    VerifyEmailRequest:
+      type: object
+      required:
+        - email
+        - otp
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        otp:
+          type: string
+          minLength: 6
+          maxLength: 6
+          example: '123456'
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          description: Current password
+          example: CurrentPassword123!
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+          description: New password
+          example: NewPassword123!
+
+    OTPGenerateRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+
+    OTPVerifyRequest:
+      type: object
+      required:
+        - email
+        - otp
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        otp:
+          type: string
+          minLength: 6
+          maxLength: 6
+          example: '123456'
+
+    # Auth Response Schemas
+    StandardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: 'An error occurred'
+        data:
+          type: object

@@ -1,0 +1,238 @@
+paths:
+  /email/verify:
+    post:
+      summary: Send verification email
+      description: Send a verification email to the user
+      tags:
+        - Email
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address to send verification to
+      responses:
+        '200':
+          description: Verification email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Verification email sent successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /email/reset-password:
+    post:
+      summary: Send reset password email
+      description: Send a password reset email to the user
+      tags:
+        - Email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address to send reset link to
+      responses:
+        '200':
+          description: Reset password email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Reset password email sent successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /email/welcome:
+    post:
+      summary: Send welcome email
+      description: Send a welcome email to the user
+      tags:
+        - Email
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address to send welcome email to
+      responses:
+        '200':
+          description: Welcome email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Welcome email sent successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /email/project-assignment:
+    post:
+      summary: Send project assignment email
+      description: Send a project assignment notification email
+      tags:
+        - Email
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - projectId
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address to send assignment notification to
+                projectId:
+                  type: integer
+                  description: ID of the assigned project
+      responses:
+        '200':
+          description: Project assignment email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Project assignment email sent successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /email/meeting-invitation:
+    post:
+      summary: Send meeting invitation email
+      description: Send a meeting invitation email
+      tags:
+        - Email
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - meetingId
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address to send invitation to
+                meetingId:
+                  type: integer
+                  description: ID of the meeting
+      responses:
+        '200':
+          description: Meeting invitation email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Meeting invitation email sent successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /email/schedule-confirmation:
+    post:
+      summary: Send schedule confirmation email
+      description: Send a schedule confirmation email
+      tags:
+        - Email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - scheduleId
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address to send confirmation to
+                scheduleId:
+                  type: integer
+                  description: ID of the schedule
+      responses:
+        '200':
+          description: Schedule confirmation email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Schedule confirmation email sent successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'

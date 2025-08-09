@@ -1,0 +1,213 @@
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int? // Changed to Int to match User.id
+  user      User?    @relation("UserToSession", fields: [userId], references: [id])
+}
+
+//* model User Management Module
+model User {
+  id                     Int                      @id @default(autoincrement())
+  email                  String                   @unique
+  password               String?
+  firstName              String
+  middleName             String?
+  lastName               String
+  role                   Role                     @default(FREELANCER)
+  isEmailVerified        Boolean                  @default(false)
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  provider               String?
+  providerId             String?
+  avatar                 String?
+  status                 UserStatus               @default(ACTIVE)
+  freelancer             Freelancer?              @relation("UserToFreelancer")
+  // client                 Client?                  @relation("UserToClient", fields: [clientId], references: [id])
+  // clientId               Int?                     @unique
+  client                 Client?
+  projectManager         ProjectManager?          @relation("UserToProjectManager")
+  signedContracts        Contract[]               @relation("ContractSignedBy")
+  assignedTasks          Task[]                   @relation("TaskAssignedTo")
+  taskAssignedBy         Task[]                   @relation("TaskAssignedBy")
+  // Relations
+  activities             ProjectActivity[]        @relation("UserToActivity")
+  comments               Comment[]                @relation("UserToComment")
+  documents              Document[]               @relation("UserToDocument")
+  favorites              Favorite[]               @relation("UserToFavorite")
+  timeLogs               TimeLog[]                @relation("UserToTimeLog")
+  jobTimers              JobTimer[]               @relation("UserToJobTimer")
+  tokens                 Token[]                  @relation("UserToToken")
+  address                Address?                 @relation("UserToAddress")
+  security               Security?                @relation("UserToSecurity")
+  preferences            UserPreferences?         @relation("UserToPreferences")
+  notificationPrefs      NotificationPreferences? @relation("UserToNotificationPrefs")
+  projects               Project[]                @relation("UserToProject")
+  uploadedDocs           ProjectDocument[]        @relation("UserToProjectDocument")
+  terminatedProjects     TerminationInformation[] @relation("UserToTermination")
+  reviews                Review[]                 @relation("UserToReview")
+  auditLogs              AuditLog[]               @relation("UserToAuditLog")
+  organizedMeetings      Meeting[]                @relation("UserToMeetingOrganizer")
+  meetingParticipations  Meeting[]                @relation("UserToMeetingParticipant")
+  sentMessages           ChatMessage[]            @relation("UserToMessageSent")
+  receivedMessages       ChatMessage[]            @relation("UserToMessageReceived")
+  chatRoomParticipations ChatRoom[]               @relation("UserToChatRoomParticipant")
+  adminChatRooms         ChatRoom[]               @relation("UserToChatRoomAdmin")
+  managedChatRooms       ChatRoom[]               @relation("UserToChatRoomManager")
+  receivedNotifications  Notification[]           @relation("UserToNotificationReceived")
+  sentNotifications      Notification[]           @relation("UserToNotificationSent")
+  sessions               Session[]                @relation("UserToSession")
+  notifications          Notification[]           @relation("UserToNotification")
+  createdFolders         DocumentFolder[]
+  loginAudits            UserLoginAudit[]
+  DocumentVersion        DocumentVersion[]
+  ApiUsage               ApiUsage[]
+  uploadedFiles          File[]                   @relation("UserUploadedFile")
+  deliverableAssignments Deliverable[]            @relation("DeliverableAssignees")
+  deliverableFeedbacks   DeliverableFeedback[]
+  deliverableComments    DeliverableComment[]     @relation("UserToDeliverableComment")
+
+  // Learning Library
+
+  libresources    LibraryResource[]    @relation("ResourceAuthor")
+  libprogress     LibraryProgress[]
+  libcomments     LibraryComment[]
+  libreplies      LibraryReply[]
+  libfavorites    LibraryFavorite[]
+  libpins         LibraryPin[]
+  libcertificates LibraryCertificate[]
+  libreactions    LibraryReaction[]
+
+  @@index([email])
+  @@index([provider, providerId])
+}
+
+model Token {
+  id          Int      @id @default(autoincrement())
+  token       String
+  type        String
+  expires     DateTime
+  blacklisted Boolean
+  email       String? // Add this field
+  user        User?    @relation("UserToToken", fields: [userId], references: [id])
+  userId      Int? // Make userId optional
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([token])
+}
+
+model Address {
+  id            Int      @id @default(autoincrement())
+  street        String
+  city          String
+  state         String
+  country       String
+  postalCode    String
+  User          User     @relation("UserToAddress", fields: [userId], references: [id])
+  userId        Int      @unique
+  clientBilling Client[] @relation("ClientBillingAddress")
+
+  @@index([userId])
+}
+
+model Security {
+  id               Int      @id @default(autoincrement())
+  twoFactorEnabled Boolean  @default(false)
+  isCodeVerified   Boolean  @default(false)
+  twoFactorSecret  String?
+  backupCodes      String[]
+  User             User     @relation("UserToSecurity", fields: [userId], references: [id])
+  userId           Int      @unique
+
+  @@index([userId])
+}
+
+model UserPreferences {
+  id             Int     @id @default(autoincrement())
+  color          String?
+  theme          String  @default("light")
+  layout         String  @default("default")
+  fontSize       Int     @default(14)
+  language       String  @default("en")
+  timezone       String  @default("UTC")
+  emailFrequency String  @default("daily")
+  dateFormat     String  @default("MM/DD/YYYY")
+  timeFormat     String  @default("12-hour")
+  privacy        Privacy @relation(fields: [privacyId], references: [id])
+  privacyId      Int
+  User           User    @relation("UserToPreferences", fields: [userId], references: [id])
+  userId         Int     @unique
+
+  @@index([userId])
+}
+
+model Privacy {
+  id               Int               @id @default(autoincrement())
+  analyticsSharing Boolean           @default(true)
+  personalizedAds  Boolean           @default(true)
+  dataRetention    String            @default("1 year")
+  UserPreferences  UserPreferences[]
+}
+
+model NotificationPreferences {
+  id              Int     @id @default(autoincrement())
+  emailEnabled    Boolean @default(true)
+  pushEnabled     Boolean @default(true)
+  smsEnabled      Boolean @default(false)
+  accountActivity Boolean @default(true)
+  newFeatures     Boolean @default(true)
+  marketing       Boolean @default(false)
+  frequency       String  @default("daily")
+  quietHoursStart String  @default("22:00")
+  quietHoursEnd   String  @default("08:00")
+  User            User    @relation("UserToNotificationPrefs", fields: [userId], references: [id])
+  userId          Int     @unique
+
+  @@index([userId])
+}
+
+model UserLoginAudit {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  email        String
+  ip           String?
+  organization String?
+  asn          String?
+  city         String?
+  region       String?
+  country      String?
+  latitude     Float?
+  longitude    Float?
+  timezone     String?
+  userAgent    String?
+  platform     String?
+  host         String?
+  currency     String?
+  language     String?
+  loginTime    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model ApiUsage {
+  id        String   @id @default(uuid())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  endpoint  String
+  method    String
+  status    Int
+  duration  Int // Response time in ms
+  timestamp DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([endpoint])
+  @@index([timestamp])
+}

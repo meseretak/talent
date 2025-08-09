@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+
+# Uploads directory
+/uploads
+
+# Docs
+/docs
+
+# Logs directory
+/logs
+
+# yarn error logs
+yarn-error.log
+# Environment varibales
+.env*
+!.env*.example
+
+# Code coverage
+coverage
+
+# prisma generated files
+./src/generated/
+
+# misc
+.DS_Store
+
+# Dev db data
+db
+
+# TypeScript
+build
+.qodo

@@ -1,0 +1,126 @@
+paths: # Learning Library Routes
+  /library/categories:
+    post:
+      summary: Create a library category
+      tags: [Library]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                color:
+                  type: string
+                isActive:
+                  type: boolean
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryCategory'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    get:
+      summary: Get all library categories
+      tags: [Library]
+      parameters:
+        - in: query
+          name: isActive
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LibraryCategory'
+
+  /library/resources:
+    post:
+      summary: Create a library resource
+      tags: [Library]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - content
+                - categoryId
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                content:
+                  type: string
+                keyPoints:
+                  type: string
+                difficulty:
+                  type: string
+                  enum: [BEGINNER, INTERMEDIATE, ADVANCED]
+                duration:
+                  type: integer
+                thumbnailUrl:
+                  type: string
+                categoryId:
+                  type: string
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryResource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: Get all library resources
+      tags: [Library]
+      parameters:
+        - in: query
+          name: categoryId
+          schema:
+            type: string
+        - in: query
+          name: difficulty
+          schema:
+            type: string
+            enum: [BEGINNER, INTERMEDIATE, ADVANCED]
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [DRAFT, PUBLISHED, ARCHIVED]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LibraryResource'

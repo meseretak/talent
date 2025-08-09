@@ -1,0 +1,352 @@
+paths:
+  /referrals/create:
+    post:
+      summary: Create referral
+      description: Create a new referral
+      tags:
+        - Referrals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReferralRequest'
+      responses:
+        '201':
+          description: Referral created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/users/{userId}/referral-stats:
+    get:
+      summary: Get referral stats
+      description: Get referral statistics for a user
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '200':
+          description: Referral stats retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralStatsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/users/{userId}/generate-link:
+    post:
+      summary: Generate referral link
+      description: Generate a referral link for a user
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '200':
+          description: Referral link generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralLinkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/track-click/{referralCode}:
+    post:
+      summary: Track referral click
+      description: Track a referral link click
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: referralCode
+          required: true
+          schema:
+            type: string
+          description: Referral code
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackReferralClickRequest'
+      responses:
+        '200':
+          description: Referral click tracked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Referral click tracked successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/complete/{referralLink}:
+    post:
+      summary: Complete referral
+      description: Complete a referral process
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: referralLink
+          required: true
+          schema:
+            type: string
+          description: Referral link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteReferralRequest'
+      responses:
+        '200':
+          description: Referral completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Referral completed successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/settings:
+    get:
+      summary: Get referral settings
+      description: Get referral system settings
+      tags:
+        - Referrals
+      responses:
+        '200':
+          description: Referral settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralSettingsResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    put:
+      summary: Update referral settings
+      description: Update referral system settings
+      tags:
+        - Referrals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReferralSettingsRequest'
+      responses:
+        '200':
+          description: Referral settings updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Referral settings updated successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/analytics/{referralId}:
+    get:
+      summary: Get referral analytics
+      description: Get analytics for a specific referral
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: referralId
+          required: true
+          schema:
+            type: integer
+          description: Referral ID
+      responses:
+        '200':
+          description: Referral analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralAnalyticsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/process-reward/{referralId}:
+    post:
+      summary: Process referral reward
+      description: Process a reward for a completed referral
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: referralId
+          required: true
+          schema:
+            type: integer
+          description: Referral ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessReferralRewardRequest'
+      responses:
+        '200':
+          description: Referral reward processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Referral reward processed successfully'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/fraud-score/{referralId}:
+    get:
+      summary: Get referral fraud score
+      description: Get fraud score for a referral
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: referralId
+          required: true
+          schema:
+            type: integer
+          description: Referral ID
+      responses:
+        '200':
+          description: Fraud score retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralFraudScoreResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/clicks/{referralId}:
+    get:
+      summary: Get referral clicks
+      description: Get click statistics for a referral
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: referralId
+          required: true
+          schema:
+            type: integer
+          description: Referral ID
+      responses:
+        '200':
+          description: Referral clicks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralClicksResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /referrals/performance/{userId}:
+    get:
+      summary: Get referral performance
+      description: Get referral performance metrics for a user
+      tags:
+        - Referrals
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+          description: User ID
+      responses:
+        '200':
+          description: Referral performance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralPerformanceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
